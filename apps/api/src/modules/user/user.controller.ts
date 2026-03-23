@@ -2,12 +2,16 @@ import type { Request, Response } from "express";
 
 import type {
   ApiSuccessResponse,
+  LoginSuccessResponse,
   RequestOtpResponse,
   VerifyOtpSuccessResponse
 } from "../../common/types/user.types.js";
+import { setAuthCookie } from "../../common/utils/auth-cookie.js";
 import { UserService } from "./user.service.js";
 import {
   createUserSchema,
+  loginSchema,
+  type LoginInput,
   verifyOtpSchema,
   type VerifyOtpInput
 } from "./user.validation.js";
@@ -32,6 +36,20 @@ export class UserController {
   ) {
     const { email, otp }: VerifyOtpInput = verifyOtpSchema.parse(req.body);
     const result = await userService.verifyOtp(email, otp);
+
+    setAuthCookie(res, result.token);
+
+    return res.status(200).json({ data: result });
+  }
+
+  async login(
+    req: Request,
+    res: Response<ApiSuccessResponse<LoginSuccessResponse>>
+  ) {
+    const payload: LoginInput = loginSchema.parse(req.body);
+    const result = await userService.loginUser(payload);
+
+    setAuthCookie(res, result.token);
 
     return res.status(200).json({ data: result });
   }

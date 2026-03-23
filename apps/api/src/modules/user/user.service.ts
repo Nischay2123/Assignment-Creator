@@ -4,6 +4,8 @@ import { HttpError } from "../../common/errors/http-error.js";
 import { mailService } from "../../common/services/mail.service.js";
 import type {
   CreateUserInput,
+  LoginInput,
+  LoginSuccessResponse,
   RequestOtpResponse,
   UserResponse,
   VerifyOtpSuccessResponse
@@ -127,6 +129,37 @@ export class UserService {
 
     return {
       message: "User created successfully",
+      user: toUserResponse(user),
+      token
+    };
+  }
+
+  async loginUser(payload: LoginInput): Promise<LoginSuccessResponse> {
+    const normalizedEmail = payload.email.toLowerCase().trim();
+    const user = await UserModel.findOne({ email: normalizedEmail }).select("+password");
+
+    if (!user) {
+      throw new HttpError(401, "Invalid email or password");
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(payload.password);
+
+    if (!isPasswordValid) {
+      throw new HttpError(401, "Invalid email or password");
+    }
+
+    if (!user.isEmailVerified) {
+      throw new HttpError(403, "Email is not verified");
+    }
+
+    const token = user.generateAccessToken();
+
+    userLogger.info("User logged in", {
+      email: normalizedEmail
+    });
+
+    return {
+      message: "Login successful",
       user: toUserResponse(user),
       token
     };

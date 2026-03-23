@@ -1,33 +1,33 @@
 import { Card } from "@/components/ui/card"
-import { RegisterForm } from "@/features/auth/components/RegisterForm"
+import { LoginForm } from "@/features/auth/components/LoginForm"
 
-interface RegisterPageProps {
-  onSuccessCallback?: (email: string) => void
-  onLoginClick?: () => void
+interface LoginPageProps {
+  onSuccessCallback?: () => void
+  onBackToRegister?: () => void
 }
 
-export const RegisterPage = ({ onSuccessCallback, onLoginClick }: RegisterPageProps) => {
+export const LoginPage = ({ onSuccessCallback, onBackToRegister }: LoginPageProps) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <div className="px-6 py-8">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-foreground mb-2">Create Account</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Welcome Back</h1>
             <p className="text-sm text-muted-foreground">
-              Join us by filling in your details below
+              Sign in to continue to your dashboard
             </p>
           </div>
 
-          <RegisterForm onSuccessCallback={onSuccessCallback} />
+          <LoginForm onSuccessCallback={onSuccessCallback} />
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            Don&apos;t have an account?{" "}
             <button
               type="button"
-              onClick={onLoginClick}
+              onClick={onBackToRegister}
               className="text-primary hover:underline"
             >
-              Sign in
+              Create one
             </button>
           </div>
         </div>

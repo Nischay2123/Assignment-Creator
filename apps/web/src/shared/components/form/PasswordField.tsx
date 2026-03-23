@@ -26,7 +26,7 @@ export const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldPro
           <button
             type="button"
             onClick={toggleShowPassword}
-            className="absolute right-3 top-[32px] text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 top-8 text-muted-foreground hover:text-foreground transition-colors"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (

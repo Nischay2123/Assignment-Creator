@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/apis/baseApi"
+import type { AuthUser } from "@/features/auth/types/auth.types"
 
 export interface RequestOtpPayload {
   name: string
@@ -16,14 +17,20 @@ export interface VerifyOtpPayload {
   otp: string
 }
 
-export interface UserData {
-  id: string
-  name: string
+export interface LoginPayload {
   email: string
-  isEmailVerified: boolean
+  password: string
 }
 
+export type UserData = AuthUser
+
 export interface VerifyOtpResponse {
+  message: string
+  user: UserData
+  token: string
+}
+
+export interface LoginResponse {
   message: string
   user: UserData
   token: string
@@ -47,7 +54,15 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [],
     }),
+    login: builder.mutation<LoginResponse, LoginPayload>({
+      query: (payload) => ({
+        url: "users/login",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: [],
+    }),
   }),
 })
 
-export const { useRequestOtpMutation, useVerifyOtpMutation } = authApi
+export const { useRequestOtpMutation, useVerifyOtpMutation, useLoginMutation } = authApi

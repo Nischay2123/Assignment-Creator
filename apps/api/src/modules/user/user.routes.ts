@@ -13,3 +13,6 @@ userRoutes.post("/request-otp", asyncHandler((req, res) =>
 userRoutes.post("/verify-otp", asyncHandler((req, res) =>
   userController.verifyOtp(req, res)
 ));
+userRoutes.post("/login", asyncHandler((req, res) =>
+  userController.login(req, res)
+));

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react"
 import { useVerifyOtpMutation } from "../api/authApi"
+import { setAuthenticatedUser, setAuthToken } from "@/features/auth/lib/authStorage"
 
 interface UseOtpVerificationReturn {
   otp: string
@@ -47,6 +48,8 @@ export const useOtpVerification = (email: string, onSuccessCallback?: (token: st
           otp,
         }).unwrap()
 
+        setAuthenticatedUser(result.user)
+        setAuthToken(result.token)
         setSubmitSuccess(true)
 
         // Call callback with token

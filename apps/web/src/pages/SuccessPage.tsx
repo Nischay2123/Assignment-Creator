@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle } from "lucide-react"
 
 interface SuccessPageProps {
-  onRestart?: () => void
+  userName?: string
+  userEmail?: string
+  onGoToLogin?: () => void
+  onBackToRegister?: () => void
 }
 
-export const SuccessPage = ({ onRestart }: SuccessPageProps) => {
+export const SuccessPage = ({ userName, userEmail, onGoToLogin, onBackToRegister }: SuccessPageProps) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -15,19 +18,21 @@ export const SuccessPage = ({ onRestart }: SuccessPageProps) => {
             <div className="flex justify-center mb-4">
               <CheckCircle className="h-16 w-16 text-green-500" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Registration Complete!</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Login Successful</h1>
             <p className="text-sm text-muted-foreground">
-              Your email has been verified successfully. You can now log in to your account.
+              You are now authenticated and your session is active in browser cookies.
             </p>
+            <p className="text-sm mt-3 text-foreground font-medium">{userName ?? "User"}</p>
+            {userEmail && <p className="text-xs text-muted-foreground">{userEmail}</p>}
           </div>
 
           <div className="space-y-3">
-            <Button className="w-full" onClick={onRestart}>
-              Go to Login
+            <Button className="w-full" onClick={onGoToLogin}>
+              Logout to Login
             </Button>
 
-            <Button variant="outline" className="w-full" onClick={onRestart}>
-              Back to Home
+            <Button variant="outline" className="w-full" onClick={onBackToRegister}>
+              Back to Registration
             </Button>
           </div>
         </div>

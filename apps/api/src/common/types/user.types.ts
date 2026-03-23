@@ -36,6 +36,11 @@ export interface CreateUserInput {
   password: string;
 }
 
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
 export interface RequestOtpResponse {
   message: string;
   verificationRequired: true;
@@ -55,6 +60,12 @@ export interface ApiSuccessResponse<T> {
 }
 
 export interface VerifyOtpSuccessResponse {
+  message: string;
+  user: UserResponse;
+  token: string;
+}
+
+export interface LoginSuccessResponse {
   message: string;
   user: UserResponse;
   token: string;
