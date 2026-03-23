@@ -1,12 +1,13 @@
-import type { Assignment } from "@/features/assignments/types/assignment.types"
+import type { AssignmentListItem } from "@/features/assignments/types/assignment.types"
 
-export const assignmentSeedData: Assignment[] = [
+export const assignmentSeedData: AssignmentListItem[] = [
   {
     id: "electricity-quiz",
     title: "Quiz on Electricity",
     assignedOn: "2025-06-20",
     dueOn: "2025-06-21",
     status: "active",
+    latestGenerationLabel: "Generation v1 • completed",
   },
   {
     id: "fractions-practice",
@@ -14,6 +15,7 @@ export const assignmentSeedData: Assignment[] = [
     assignedOn: "2025-06-22",
     dueOn: "2025-06-24",
     status: "review",
+    latestGenerationLabel: "Generation v2 • processing",
   },
   {
     id: "ecosystem-reflection",
@@ -21,6 +23,7 @@ export const assignmentSeedData: Assignment[] = [
     assignedOn: "2025-06-23",
     dueOn: "2025-06-27",
     status: "scheduled",
+    latestGenerationLabel: "No generations yet",
   },
   {
     id: "reading-comprehension",
@@ -28,6 +31,7 @@ export const assignmentSeedData: Assignment[] = [
     assignedOn: "2025-06-24",
     dueOn: "2025-06-28",
     status: "active",
+    latestGenerationLabel: "Generation v1 • completed",
   },
   {
     id: "algebra-revision",
@@ -35,6 +39,7 @@ export const assignmentSeedData: Assignment[] = [
     assignedOn: "2025-06-25",
     dueOn: "2025-06-30",
     status: "review",
+    latestGenerationLabel: "Generation v3 • queued",
   },
   {
     id: "water-cycle-poster",
@@ -42,5 +47,6 @@ export const assignmentSeedData: Assignment[] = [
     assignedOn: "2025-06-26",
     dueOn: "2025-07-01",
     status: "scheduled",
+    latestGenerationLabel: "No generations yet",
   },
 ]

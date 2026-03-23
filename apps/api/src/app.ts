@@ -3,6 +3,8 @@ import express from "express";
 import { logger } from "@repo/logger";
 
 import { errorHandler } from "./common/middleware/error-handler.js";
+import { assignmentRoutes } from "./modules/assignment/assignment.routes.js";
+import { generationRoutes } from "./modules/generation/generation.routes.js";
 import { userRoutes } from "./modules/user/user.routes.js";
 
 export const createApp = () => {
@@ -39,6 +41,8 @@ export const createApp = () => {
   });
 
   app.use("/api/users", userRoutes);
+  app.use("/api/assignments", assignmentRoutes);
+  app.use("/api/generations", generationRoutes);
   app.use(errorHandler);
 
   return app;

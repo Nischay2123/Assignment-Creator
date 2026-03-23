@@ -1,27 +1,45 @@
 import { MoreVerticalIcon } from "lucide-react"
 
 import { formatAssignmentDate } from "@/features/assignments/lib/assignment-utils"
-import type { Assignment } from "@/features/assignments/types/assignment.types"
+import type { AssignmentListItem } from "@/features/assignments/types/assignment.types"
 
 type AssignmentCardProps = {
-  assignment: Assignment
+  assignment: AssignmentListItem
+  isGenerating: boolean
   isMenuOpen: boolean
-  onDelete: (assignmentId: string) => void
   onMenuToggle: (assignmentId: string) => void
+  onRegenerate: (assignmentId: string) => void
+}
+
+const statusClasses = {
+  active: "bg-foreground text-background",
+  review: "bg-muted text-foreground",
+  scheduled: "bg-secondary text-secondary-foreground",
 }
 
 export const AssignmentCard = ({
   assignment,
+  isGenerating,
   isMenuOpen,
-  onDelete,
   onMenuToggle,
+  onRegenerate,
 }: AssignmentCardProps) => {
   return (
     <article className="relative min-h-40 rounded-[28px] border border-border bg-card p-5 shadow-sm transition hover:shadow-md sm:min-h-44 sm:p-6">
       <div className="flex items-start justify-between gap-4">
-        <h3 className="max-w-[16ch] text-2xl font-semibold leading-tight tracking-tight text-card-foreground underline decoration-1 underline-offset-4 sm:text-[1.95rem]">
-          {assignment.title}
-        </h3>
+        <div className="space-y-3">
+          <span
+            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize ${statusClasses[assignment.status]}`}
+          >
+            {assignment.status}
+          </span>
+          <div>
+            <h3 className="max-w-[16ch] text-2xl font-semibold leading-tight tracking-tight text-card-foreground underline decoration-1 underline-offset-4 sm:text-[1.95rem]">
+              {assignment.title}
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">{assignment.latestGenerationLabel}</p>
+          </div>
+        </div>
 
         <div className="relative" data-assignments-overlay-root="true">
           <button
@@ -35,15 +53,13 @@ export const AssignmentCard = ({
 
           {isMenuOpen ? (
             <div className="absolute right-0 top-11 z-20 min-w-44 rounded-[22px] border border-border bg-popover p-2 shadow-xl">
-              <button className="w-full rounded-2xl px-4 py-3 text-left text-sm text-popover-foreground hover:bg-muted" type="button">
-                View Assignment
-              </button>
               <button
-                className="w-full rounded-2xl px-4 py-3 text-left text-sm text-destructive hover:bg-destructive/10"
-                onClick={() => onDelete(assignment.id)}
+                className="w-full rounded-2xl px-4 py-3 text-left text-sm text-popover-foreground hover:bg-muted disabled:opacity-50"
+                disabled={isGenerating}
+                onClick={() => onRegenerate(assignment.id)}
                 type="button"
               >
-                Delete
+                {isGenerating ? "Regenerating..." : "Generate Again"}
               </button>
             </div>
           ) : null}

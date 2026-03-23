@@ -15,7 +15,6 @@ export const AssignmentsPageView = ({ model }: AssignmentsPageViewProps) => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <section className="mb-6 flex items-start gap-4">
         <div className="space-y-2">
           <h1 className={`${titleSizeClass} font-semibold tracking-tight text-foreground`}>
@@ -27,13 +26,31 @@ export const AssignmentsPageView = ({ model }: AssignmentsPageViewProps) => {
         </div>
       </section>
 
-      {/* Content */}
       <div className="mt-5 space-y-5">
+        {model.feedbackMessage ? (
+          <div className="rounded-[24px] border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm">
+            {model.feedbackMessage}
+          </div>
+        ) : null}
+
+        {model.hasError ? (
+          <div className="rounded-[24px] border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Unable to load assignments right now. Please refresh and try again.
+          </div>
+        ) : null}
+
+        {model.isLoading ? (
+          <div className="rounded-[28px] border border-border bg-card px-5 py-8 text-sm text-muted-foreground shadow-sm">
+            Loading assignments and generation history...
+          </div>
+        ) : null}
+
         {hasAssignments ? (
           <>
             <AssignmentsToolbar
               filterOptions={model.filterOptions}
               isFilterMenuOpen={model.isFilterMenuOpen}
+              onCreateAssignment={model.handleCreateAssignment}
               onFilterMenuToggle={model.handleFilterMenuToggle}
               onFilterSelect={model.handleFilterSelect}
               onSearchChange={model.handleSearchChange}
@@ -44,18 +61,21 @@ export const AssignmentsPageView = ({ model }: AssignmentsPageViewProps) => {
 
             <AssignmentsGrid
               assignments={model.assignments}
-              onDelete={model.handleDeleteAssignment}
+              isGenerating={model.isGenerating}
               onMenuToggle={model.handleAssignmentMenuToggle}
+              onRegenerate={model.handleRegenerateAssignment}
               openMenuId={model.openMenuId}
             />
           </>
         ) : (
-          <AssignmentsEmptyState
-            actionLabel={model.emptyState.actionLabel}
-            description={model.emptyState.description}
-            onAction={model.handleEmptyAction}
-            title={model.emptyState.title}
-          />
+          !model.isLoading && (
+            <AssignmentsEmptyState
+              actionLabel={model.emptyState.actionLabel}
+              description={model.emptyState.description}
+              onAction={model.handleEmptyAction}
+              title={model.emptyState.title}
+            />
+          )
         )}
       </div>
     </div>

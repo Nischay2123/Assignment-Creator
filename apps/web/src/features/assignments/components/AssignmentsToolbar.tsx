@@ -1,5 +1,6 @@
 import { ListFilterIcon, SearchIcon } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { AssignmentFilter } from "@/features/assignments/types/assignment.types"
 import { cn } from "@/lib/utils"
@@ -10,6 +11,7 @@ type AssignmentsToolbarProps = {
   searchValue: string
   selectedFilter: AssignmentFilter
   selectedFilterLabel: string
+  onCreateAssignment: () => void
   onFilterMenuToggle: () => void
   onFilterSelect: (value: AssignmentFilter) => void
   onSearchChange: (value: string) => void
@@ -21,12 +23,13 @@ export const AssignmentsToolbar = ({
   searchValue,
   selectedFilter,
   selectedFilterLabel,
+  onCreateAssignment,
   onFilterMenuToggle,
   onFilterSelect,
   onSearchChange,
 }: AssignmentsToolbarProps) => {
   return (
-    <section className="grid gap-3 md:grid-cols-[minmax(0,1fr)_380px]">
+    <section className="grid gap-3 xl:grid-cols-[240px_minmax(0,1fr)_220px]">
       <div className="relative" data-assignments-overlay-root="true">
         <button
           className="flex h-14 w-full items-center gap-3 rounded-[22px] border border-border bg-card px-4 text-left text-muted-foreground shadow-sm transition hover:border-ring/40"
@@ -65,6 +68,10 @@ export const AssignmentsToolbar = ({
           value={searchValue}
         />
       </label>
+
+      <Button className="h-14 rounded-[22px]" onClick={onCreateAssignment} size="lg">
+        Create Assignment
+      </Button>
     </section>
   )
 }

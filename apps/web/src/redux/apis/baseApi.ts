@@ -8,5 +8,6 @@ const baseQuery = fetchBaseQuery({
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery,
+  tagTypes: ["Assignments", "Generations"],
   endpoints: (_builder) => ({}),
 })

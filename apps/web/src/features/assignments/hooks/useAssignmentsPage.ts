@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
+import {
+  useCreateGenerationMutation,
+  useGetAssignmentsQuery,
+  useGetGenerationsQuery,
+} from "@/features/assignments/api/assignmentApi"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { assignmentSeedData } from "@/features/assignments/lib/assignment-data"
+import { toAssignmentListItem } from "@/features/assignments/lib/assignment-utils"
 import type {
-  Assignment,
+  AssignmentListItem,
   AssignmentFilter,
 } from "@/features/assignments/types/assignment.types"
 
@@ -15,7 +20,7 @@ const filterOptions: Array<{ label: string; value: AssignmentFilter }> = [
   { label: "Scheduled", value: "scheduled" },
 ]
 
-const matchesFilter = (assignment: Assignment, filter: AssignmentFilter) => {
+const matchesFilter = (assignment: AssignmentListItem, filter: AssignmentFilter) => {
   if (filter === "all") {
     return true
   }
@@ -23,27 +28,38 @@ const matchesFilter = (assignment: Assignment, filter: AssignmentFilter) => {
   return assignment.status === filter
 }
 
-const matchesSearch = (assignment: Assignment, searchTerm: string) =>
+const matchesSearch = (assignment: AssignmentListItem, searchTerm: string) =>
   assignment.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
 
 export const useAssignmentsPage = () => {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
-  const [assignments, setAssignments] = useState<Assignment[]>(assignmentSeedData)
   const [searchValue, setSearchValue] = useState("")
   const [selectedFilter, setSelectedFilter] = useState<AssignmentFilter>("all")
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [feedbackMessage, setFeedbackMessage] = useState("")
 
-  const filteredAssignments = useMemo(
-    () =>
-      assignments.filter(
-        (assignment) =>
-          matchesFilter(assignment, selectedFilter) &&
-          matchesSearch(assignment, searchValue)
-      ),
-    [assignments, searchValue, selectedFilter]
-  )
+  const assignmentsQuery = useGetAssignmentsQuery()
+  const generationsQuery = useGetGenerationsQuery()
+  const [createGeneration, createGenerationState] = useCreateGenerationMutation()
+
+  const assignments = useMemo(() => {
+    const assignmentRecords = assignmentsQuery.data ?? []
+    const generationRecords = generationsQuery.data ?? []
+
+    return assignmentRecords.map((assignment) =>
+      toAssignmentListItem(assignment, generationRecords)
+    )
+  }, [assignmentsQuery.data, generationsQuery.data])
+
+  const filteredAssignments = useMemo(() => {
+    return assignments.filter(
+      (assignment) =>
+        matchesFilter(assignment, selectedFilter) &&
+        matchesSearch(assignment, searchValue)
+    )
+  }, [assignments, searchValue, selectedFilter])
 
   const hasAssignments = assignments.length > 0
   const hasVisibleAssignments = filteredAssignments.length > 0
@@ -74,57 +90,64 @@ export const useAssignmentsPage = () => {
       "All Assignments",
     [selectedFilter]
   )
+  const isLoading = assignmentsQuery.isLoading || generationsQuery.isLoading
+  const hasError = Boolean(assignmentsQuery.error || generationsQuery.error)
 
-  const handleSearchChange = useCallback((value: string) => {
+  const handleSearchChange = (value: string) => {
     setSearchValue(value)
-  }, [])
+  }
 
-  const handleFilterSelect = useCallback((value: AssignmentFilter) => {
+  const handleFilterSelect = (value: AssignmentFilter) => {
     setSelectedFilter(value)
     setIsFilterMenuOpen(false)
-  }, [])
+  }
 
-  const handleFilterMenuToggle = useCallback(() => {
+  const handleFilterMenuToggle = () => {
     setIsFilterMenuOpen((currentValue) => !currentValue)
     setOpenMenuId(null)
-  }, [])
+  }
 
-  const handleAssignmentMenuToggle = useCallback((assignmentId: string) => {
+  const handleAssignmentMenuToggle = (assignmentId: string) => {
     setOpenMenuId((currentValue) =>
       currentValue === assignmentId ? null : assignmentId
     )
     setIsFilterMenuOpen(false)
-  }, [])
+  }
 
-  const handleMenuClose = useCallback(() => {
+  const handleMenuClose = () => {
     setOpenMenuId(null)
     setIsFilterMenuOpen(false)
-  }, [])
+  }
 
-  const handleDeleteAssignment = useCallback((assignmentId: string) => {
-    setAssignments((currentAssignments) =>
-      currentAssignments.filter((assignment) => assignment.id !== assignmentId)
-    )
-    setOpenMenuId(null)
-  }, [])
-
-  const handleCreateAssignment = useCallback(() => {
+  const handleCreateAssignment = () => {
     navigate("/generate-assignment")
-  }, [navigate])
+  }
 
-  const handleClearSearch = useCallback(() => {
+  const handleClearSearch = () => {
     setSearchValue("")
     setSelectedFilter("all")
-  }, [])
+  }
 
-  const handleEmptyAction = useCallback(() => {
+  const handleEmptyAction = () => {
     if (emptyState.actionVariant === "create") {
       handleCreateAssignment()
       return
     }
 
     handleClearSearch()
-  }, [emptyState.actionVariant, handleClearSearch, handleCreateAssignment])
+  }
+
+  const handleRegenerateAssignment = async (assignmentId: string) => {
+    setFeedbackMessage("")
+
+    try {
+      const result = await createGeneration({ assignmentId }).unwrap()
+      setFeedbackMessage(result.message)
+      setOpenMenuId(null)
+    } catch (error: any) {
+      setFeedbackMessage(error?.data?.message || "Unable to regenerate assignment.")
+    }
+  }
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -147,9 +170,13 @@ export const useAssignmentsPage = () => {
   return {
     assignments: filteredAssignments,
     emptyState,
+    feedbackMessage,
+    hasError,
     hasAssignments,
     hasVisibleAssignments,
     isFilterMenuOpen,
+    isGenerating: createGenerationState.isLoading,
+    isLoading,
     isMobile,
     openMenuId,
     searchValue,
@@ -158,11 +185,11 @@ export const useAssignmentsPage = () => {
     filterOptions,
     handleAssignmentMenuToggle,
     handleCreateAssignment,
-    handleDeleteAssignment,
     handleEmptyAction,
     handleFilterMenuToggle,
     handleFilterSelect,
     handleMenuClose,
+    handleRegenerateAssignment,
     handleSearchChange,
   }
 }
