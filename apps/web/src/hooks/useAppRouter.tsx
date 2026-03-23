@@ -8,6 +8,7 @@ import {
 } from "@/features/auth/routes/AuthRouteViews"
 import { ProtectedAppLayout } from "@/layouts/ProtectedAppLayout"
 import { AssignmentsPage } from "@/pages/AssignmentsPage"
+import { AssignmentDetailsPage } from "@/pages/AssignmentDetailsPage"
 import { GenerateAssignmentPage } from "@/pages/GenerateAssignmentPage"
 
 export const useAppRouter = () => {
@@ -37,6 +38,10 @@ export const useAppRouter = () => {
             {
               path: "assignments",
               element: <AssignmentsPage />,
+            },
+            {
+              path: "assignments/:assignmentId",
+              element: <AssignmentDetailsPage />,
             },
             {
               path: "generate-assignment",

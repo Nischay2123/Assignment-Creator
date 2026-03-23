@@ -123,6 +123,10 @@ export const useAssignmentsPage = () => {
     navigate("/generate-assignment")
   }
 
+  const handleOpenAssignmentDetails = (assignmentId: string) => {
+    navigate(`/assignments/${assignmentId}`)
+  }
+
   const handleClearSearch = () => {
     setSearchValue("")
     setSelectedFilter("all")
@@ -189,6 +193,7 @@ export const useAssignmentsPage = () => {
     handleFilterMenuToggle,
     handleFilterSelect,
     handleMenuClose,
+    handleOpenAssignmentDetails,
     handleRegenerateAssignment,
     handleSearchChange,
   }

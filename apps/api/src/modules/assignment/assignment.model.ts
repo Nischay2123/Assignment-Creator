@@ -106,6 +106,10 @@ const AssignmentSchema = new Schema<Assignment>(
     sourceMaterial: {
       type: AssignmentSourceMaterialSchema,
       required: false
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false  
     }
   },
   {

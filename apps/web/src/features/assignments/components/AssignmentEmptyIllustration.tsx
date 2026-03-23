@@ -17,7 +17,7 @@ export const AssignmentEmptyIllustration = () => {
         <span className="mb-3 h-2 rounded-full bg-neutral-200" />
         <span className="h-2 w-4/5 rounded-full bg-neutral-200" />
       </div>
-      <div className="absolute right-7 top-16 flex size-24 items-center justify-center rounded-full border-[8px] border-violet-200 bg-white/75 shadow-[0_12px_40px_rgba(0,0,0,0.14)] backdrop-blur-sm sm:size-28">
+      <div className="absolute right-7 top-16 flex size-24 items-center justify-center rounded-full border-8 border-violet-200 bg-white/75 shadow-[0_12px_40px_rgba(0,0,0,0.14)] backdrop-blur-sm sm:size-28">
         <SearchXIcon className="size-11 text-rose-500 sm:size-14" strokeWidth={3.2} />
       </div>
       <div className="absolute bottom-4 right-5 h-20 w-5 rotate-[-42deg] rounded-full bg-violet-200 sm:h-24" />

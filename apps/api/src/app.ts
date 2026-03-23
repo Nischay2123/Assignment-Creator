@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import { logger } from "@repo/logger";
@@ -21,6 +22,7 @@ export const createApp = () => {
 
   app.use(cors(corsOptions as cors.CorsOptions));
   app.use(express.json());
+  app.use(cookieParser());
   app.use((req, res, next) => {
     const startedAt = Date.now();
 

@@ -22,7 +22,7 @@ export const QuestionTypeCard = ({
   onUpdate,
 }: QuestionTypeCardProps) => {
   return (
-    <div className="rounded-[28px] bg-background p-4 shadow-sm ring-1 ring-foreground/8">
+    <div className="rounded-[28px] bg-background p-4 shadow-sm ring-1 ring-foreground/8 sm:p-5">
       <div className="flex items-start gap-3">
         <select
           className="h-12 flex-1 rounded-full border border-border bg-background px-4 text-sm text-foreground outline-none"
@@ -41,7 +41,7 @@ export const QuestionTypeCard = ({
         </select>
 
         <button
-          className="flex size-12 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-40"
+          className="flex size-12 shrink-0 items-center justify-center rounded-full border border-transparent text-muted-foreground transition hover:border-border/60 hover:bg-muted hover:text-foreground disabled:opacity-40"
           disabled={!canRemove}
           onClick={() => onRemove(section.id)}
           type="button"
@@ -50,7 +50,7 @@ export const QuestionTypeCard = ({
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_150px_150px]">
+      <div className="mt-3.5 grid gap-3 sm:mt-4 sm:grid-cols-[1fr_150px_150px] sm:gap-4">
         <CounterField
           label="No. of Questions"
           onChange={(value) => onUpdate(section.id, { count: value })}
@@ -96,11 +96,19 @@ const CounterField = ({ label, value, onChange }: CounterFieldProps) => {
     <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">{label}</p>
       <div className="flex h-12 items-center justify-between rounded-full bg-muted/70 px-3">
-        <button onClick={() => onChange(clampValue(value - 1))} type="button">
+        <button
+          className="flex size-8 items-center justify-center rounded-full transition hover:bg-background"
+          onClick={() => onChange(clampValue(value - 1))}
+          type="button"
+        >
           <MinusIcon className="size-4 text-muted-foreground" />
         </button>
         <span className="text-base font-semibold text-foreground">{value}</span>
-        <button onClick={() => onChange(clampValue(value + 1))} type="button">
+        <button
+          className="flex size-8 items-center justify-center rounded-full transition hover:bg-background"
+          onClick={() => onChange(clampValue(value + 1))}
+          type="button"
+        >
           <PlusIcon className="size-4 text-muted-foreground" />
         </button>
       </div>

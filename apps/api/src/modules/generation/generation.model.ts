@@ -132,6 +132,10 @@ const GenerationSchema = new Schema<Generation>(
     completedAt: {
       type: Date,
       required: false
+    },
+    isDeleted: { 
+      type: Boolean,
+      default: false,
     }
   },
   {

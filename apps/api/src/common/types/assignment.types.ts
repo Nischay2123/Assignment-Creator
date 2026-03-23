@@ -31,6 +31,7 @@ export interface Assignment {
   sourceMaterial?: AssignmentSourceMaterial;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
 }
 
 export type AssignmentDocument = HydratedDocument<Assignment>;

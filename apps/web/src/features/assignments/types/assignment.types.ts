@@ -40,6 +40,7 @@ export type GenerationRecord = {
   version: number
   status: GenerationStatus
   pdfStatus: "pending" | "generated" | "failed"
+  pdfUrl?: string
   prompt?: string
   rawResponse?: string
   error?: string

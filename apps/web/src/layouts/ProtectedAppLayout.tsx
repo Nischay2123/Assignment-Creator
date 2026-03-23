@@ -40,9 +40,10 @@ export const ProtectedAppLayout = () => {
     return <Navigate to="/login" replace />
   }
 
-  const pageTitle =
-    location.pathname === "/generate-assignment"
-      ? "Generate Assignment"
+  const pageTitle = location.pathname.startsWith("/generate-assignment")
+    ? "Generate Assignment"
+    : location.pathname.startsWith("/assignments/")
+      ? "Assignment Details"
       : "Assignments"
 
   return (

@@ -5,6 +5,7 @@ type AssignmentsGridProps = {
   assignments: AssignmentListItem[]
   isGenerating: boolean
   openMenuId: string | null
+  onOpenDetails: (assignmentId: string) => void
   onMenuToggle: (assignmentId: string) => void
   onRegenerate: (assignmentId: string) => void
 }
@@ -13,6 +14,7 @@ export const AssignmentsGrid = ({
   assignments,
   isGenerating,
   openMenuId,
+  onOpenDetails,
   onMenuToggle,
   onRegenerate,
 }: AssignmentsGridProps) => {
@@ -24,6 +26,7 @@ export const AssignmentsGrid = ({
           isGenerating={isGenerating}
           isMenuOpen={openMenuId === assignment.id}
           key={assignment.id}
+          onOpenDetails={onOpenDetails}
           onMenuToggle={onMenuToggle}
           onRegenerate={onRegenerate}
         />

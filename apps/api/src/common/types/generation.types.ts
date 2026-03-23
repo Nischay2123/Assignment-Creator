@@ -41,6 +41,7 @@ export interface Generation {
   completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
 }
 
 export type GenerationDocument = HydratedDocument<Generation>;

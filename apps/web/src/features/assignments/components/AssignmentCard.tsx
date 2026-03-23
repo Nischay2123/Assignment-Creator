@@ -7,6 +7,7 @@ type AssignmentCardProps = {
   assignment: AssignmentListItem
   isGenerating: boolean
   isMenuOpen: boolean
+  onOpenDetails: (assignmentId: string) => void
   onMenuToggle: (assignmentId: string) => void
   onRegenerate: (assignmentId: string) => void
 }
@@ -21,11 +22,23 @@ export const AssignmentCard = ({
   assignment,
   isGenerating,
   isMenuOpen,
+  onOpenDetails,
   onMenuToggle,
   onRegenerate,
 }: AssignmentCardProps) => {
   return (
-    <article className="relative min-h-40 rounded-[28px] border border-border bg-card p-5 shadow-sm transition hover:shadow-md sm:min-h-44 sm:p-6">
+    <article
+      className="relative min-h-40 cursor-pointer rounded-[28px] border border-border bg-card p-5 shadow-sm transition hover:shadow-md sm:min-h-44 sm:p-6"
+      onClick={() => onOpenDetails(assignment.id)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onOpenDetails(assignment.id)
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-3">
           <span
@@ -45,7 +58,10 @@ export const AssignmentCard = ({
           <button
             aria-label={`Open actions for ${assignment.title}`}
             className="flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            onClick={() => onMenuToggle(assignment.id)}
+            onClick={(event) => {
+              event.stopPropagation()
+              onMenuToggle(assignment.id)
+            }}
             type="button"
           >
             <MoreVerticalIcon className="size-5" />
@@ -56,7 +72,10 @@ export const AssignmentCard = ({
               <button
                 className="w-full rounded-2xl px-4 py-3 text-left text-sm text-popover-foreground hover:bg-muted disabled:opacity-50"
                 disabled={isGenerating}
-                onClick={() => onRegenerate(assignment.id)}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onRegenerate(assignment.id)
+                }}
                 type="button"
               >
                 {isGenerating ? "Regenerating..." : "Generate Again"}

@@ -62,6 +62,7 @@ export const AssignmentsPageView = ({ model }: AssignmentsPageViewProps) => {
             <AssignmentsGrid
               assignments={model.assignments}
               isGenerating={model.isGenerating}
+              onOpenDetails={model.handleOpenAssignmentDetails}
               onMenuToggle={model.handleAssignmentMenuToggle}
               onRegenerate={model.handleRegenerateAssignment}
               openMenuId={model.openMenuId}

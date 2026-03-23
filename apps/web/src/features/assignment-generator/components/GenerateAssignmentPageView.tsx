@@ -11,10 +11,10 @@ export const GenerateAssignmentPageView = ({
   model,
 }: GenerateAssignmentPageViewProps) => {
   return (
-    <div className="space-y-6">
-      <GeneratorHeader />
+    <div className="space-y-5 sm:space-y-6">
+      <GeneratorHeader isEditMode={model.isEditMode} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-8">
         <GeneratorFormCard model={model} />
         <div className="xl:sticky xl:top-24 xl:self-start">
           <GeneratorSummaryCard
