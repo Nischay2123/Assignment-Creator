@@ -15,7 +15,7 @@ export const useOtpRoute = (): UseOtpRouteReturn => {
   const email = useMemo(() => searchParams.get("email") ?? "", [searchParams])
 
   const handleOtpSuccess = useCallback(() => {
-    navigate("/success")
+    navigate("/")
   }, [navigate])
 
   const handleBackToRegister = useCallback(() => {

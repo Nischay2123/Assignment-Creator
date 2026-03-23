@@ -10,7 +10,7 @@ export const PublicRoute = ({ children }: PublicRouteProps) => {
   const { isLoggedIn } = useAuthSession()
 
   if (isLoggedIn) {
-    return <Navigate to="/success" replace />
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

@@ -5,8 +5,10 @@ import {
   OtpRouteView,
   RegisterRouteView,
   RootRedirectRoute,
-  SuccessRouteView,
 } from "@/features/auth/routes/AuthRouteViews"
+import { ProtectedAppLayout } from "@/layouts/ProtectedAppLayout"
+import { AssignmentsPage } from "@/pages/AssignmentsPage"
+import { GenerateAssignmentPage } from "@/pages/GenerateAssignmentPage"
 
 export const useAppRouter = () => {
   return useMemo(
@@ -29,8 +31,18 @@ export const useAppRouter = () => {
           element: <LoginRouteView />,
         },
         {
-          path: "/success",
-          element: <SuccessRouteView />,
+          path: "/",
+          element: <ProtectedAppLayout />,
+          children: [
+            {
+              path: "assignments",
+              element: <AssignmentsPage />,
+            },
+            {
+              path: "generate-assignment",
+              element: <GenerateAssignmentPage />,
+            },
+          ],
         },
         {
           path: "*",

@@ -14,7 +14,7 @@ import { useAuthSession } from "@/features/auth/hooks/useAuthSession"
 export const RootRedirectRoute = () => {
   const { isLoggedIn } = useAuthSession()
 
-  return <Navigate to={isLoggedIn ? "/success" : "/register"} replace />
+  return <Navigate to={isLoggedIn ? "/assignments" : "/register"} replace />
 }
 
 export const RegisterRouteView = () => {

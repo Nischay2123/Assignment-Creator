@@ -85,8 +85,9 @@ export const useLoginForm = (onSuccessCallback?: () => void): UseLoginFormReturn
 
       try {
         const result = await login(formState).unwrap()
-        setAuthenticatedUser(result.user)
-        setAuthToken(result.token)
+        
+        setAuthenticatedUser(result.data.user)
+        setAuthToken(result.data.token)
         setSubmitSuccess(true)
 
         if (onSuccessCallback) {

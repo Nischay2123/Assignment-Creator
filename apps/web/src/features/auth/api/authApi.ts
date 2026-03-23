@@ -31,9 +31,11 @@ export interface VerifyOtpResponse {
 }
 
 export interface LoginResponse {
-  message: string
-  user: UserData
-  token: string
+  data:{
+    message: string
+    user: UserData
+    token: string
+  }  
 }
 
 export const authApi = baseApi.injectEndpoints({

@@ -10,7 +10,7 @@ export const useLoginRoute = (): UseLoginRouteReturn => {
   const navigate = useNavigate()
 
   const handleLoginSuccess = useCallback(() => {
-    navigate("/success")
+    navigate("/")
   }, [navigate])
 
   const handleBackToRegister = useCallback(() => {
