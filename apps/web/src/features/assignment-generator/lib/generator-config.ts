@@ -25,6 +25,7 @@ export const createGeneratorSection = (
   return {
     id: createId(),
     label: option.label,
+    instruction: "Attempt all questions.",
     questionType: option.value,
     difficulty: "medium",
     count: 4,

@@ -6,6 +6,7 @@ import type {
 export type GeneratorSectionFormItem = {
   id: string
   label: string
+  instruction: string
   questionType: AssignmentQuestionType
   difficulty: AssignmentDifficulty
   count: number
@@ -20,6 +21,7 @@ export type GeneratorOption = {
 export type GeneratorFormState = {
   title: string
   dueDate: string
+  assignmentInstruction: string
   additionalInfo: string
   sourceFileName: string
   sections: GeneratorSectionFormItem[]
@@ -28,6 +30,7 @@ export type GeneratorFormState = {
 export type GeneratorFormErrors = {
   title: string
   dueDate: string
+  assignmentInstruction: string
   additionalInfo: string
   sections: string
 }

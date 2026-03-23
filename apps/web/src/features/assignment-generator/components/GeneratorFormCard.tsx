@@ -32,6 +32,7 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
           <Field label="Assignment Title" error={model.errors.title}>
             <Input
               className="h-11 rounded-xl bg-background px-4 text-sm shadow-sm border border-border focus-visible:ring-2 focus-visible:ring-primary/30"
+              disabled={model.isEditMode}
               onChange={(event) => model.updateField("title", event.target.value)}
               placeholder="Mid-term science paper"
               value={model.form.title}
@@ -42,6 +43,7 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
             <div className="relative">
               <Input
                 className="h-11 rounded-xl bg-background px-4 pr-10 text-sm shadow-sm border border-border focus-visible:ring-2 focus-visible:ring-primary/30"
+                disabled={model.isEditMode}
                 onChange={(event) => model.updateField("dueDate", event.target.value)}
                 type="date"
                 value={model.form.dueDate}
@@ -50,6 +52,28 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
             </div>
           </Field>
         </div>
+
+        <Field
+          label="Assignment Instruction"
+          error={model.errors.assignmentInstruction}
+        >
+          <Textarea
+            className="min-h-24 rounded-xl bg-background px-4 py-3 text-sm shadow-sm border border-border focus-visible:ring-2 focus-visible:ring-primary/30"
+            disabled={model.isEditMode}
+            onChange={(event) =>
+              model.updateField("assignmentInstruction", event.target.value)
+            }
+            placeholder="For example: Attempt all questions."
+            value={model.form.assignmentInstruction}
+          />
+        </Field>
+
+        {model.isEditMode ? (
+          <StatusBanner
+            tone="success"
+            value="Edit mode: only Additional Information and Reference File can be changed."
+          />
+        ) : null}
 
         <section className="space-y-3">
           <label className="block space-y-1.5">
@@ -85,6 +109,8 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
         </section>
 
         <QuestionTypeEditor
+          error={model.errors.sections}
+          isLocked={model.isEditMode}
           onAddSection={model.addSection}
           onRemoveSection={model.removeSection}
           onUpdateSection={model.updateSection}

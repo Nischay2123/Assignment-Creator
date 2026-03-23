@@ -14,11 +14,20 @@ import type {
 } from "@/features/assignment-generator/types/generator.types"
 
 const getFormErrors = (form: GeneratorFormState): GeneratorFormErrors => {
+  const hasInvalidSections =
+    form.sections.length === 0 ||
+    form.sections.some((section) => !section.instruction.trim())
+
   return {
     title: form.title.trim() ? "" : "Assignment title is required.",
     dueDate: form.dueDate ? "" : "Due date is required.",
+    assignmentInstruction: form.assignmentInstruction.trim()
+      ? ""
+      : "Assignment instruction is required.",
     additionalInfo: "",
-    sections: form.sections.length > 0 ? "" : "Add at least one question type.",
+    sections: hasInvalidSections
+      ? "Add at least one section and provide section instructions."
+      : "",
   }
 }
 
@@ -48,14 +57,12 @@ const buildPromptOverrideFromForm = (form: GeneratorFormState) => {
   return JSON.stringify(
     {
       title: form.title.trim(),
-      instructions:
-        form.additionalInfo.trim() ||
-        "Generate a balanced assignment based on the configured sections.",
+      instructions: form.assignmentInstruction.trim(),
       dueDate: new Date(form.dueDate).toISOString(),
       sections: form.sections.map((section, index) => ({
         sectionId: `section-${index + 1}`,
         title: formatSectionLabel(section.label, index),
-        instruction: `Create ${section.count} ${section.label.toLowerCase()} with ${section.difficulty} difficulty.`,
+        instruction: section.instruction.trim(),
         questionConfig: {
           type: section.questionType,
           count: section.count,
@@ -65,7 +72,7 @@ const buildPromptOverrideFromForm = (form: GeneratorFormState) => {
       })),
       sourceMaterial: form.sourceFileName
         ? { type: "file", content: form.sourceFileName }
-        : undefined,
+        : form.additionalInfo.trim(),
     },
     null,
     2
@@ -80,6 +87,7 @@ export const useGenerateAssignmentPage = () => {
   const [form, setForm] = useState<GeneratorFormState>({
     title: "",
     dueDate: "",
+    assignmentInstruction: "Attempt all questions.",
     additionalInfo: "",
     sourceFileName: "",
     sections: [createGeneratorSection("MCQ"), createGeneratorSection("SHORT")],
@@ -118,7 +126,8 @@ export const useGenerateAssignmentPage = () => {
     setForm({
       title: editingAssignment.title,
       dueDate: toDateInputValue(editingAssignment.dueDate),
-      additionalInfo: editingAssignment.instructions,
+      assignmentInstruction: editingAssignment.instructions,
+      additionalInfo: "",
       sourceFileName:
         editingAssignment.sourceMaterial?.type === "file"
           ? editingAssignment.sourceMaterial.content
@@ -127,6 +136,7 @@ export const useGenerateAssignmentPage = () => {
         editingAssignment.sections.map((section, index) => ({
           id: `${section.sectionId}-${index + 1}`,
           label: section.title,
+          instruction: section.instruction,
           questionType: section.questionConfig.type,
           difficulty: section.questionConfig.difficulty,
           count: section.questionConfig.count,
@@ -149,6 +159,15 @@ export const useGenerateAssignmentPage = () => {
   }, [form.sections])
 
   const updateField = (field: keyof Omit<GeneratorFormState, "sections">, value: string) => {
+    const isLockedEditField =
+      isEditMode &&
+      field !== "additionalInfo" &&
+      field !== "sourceFileName"
+
+    if (isLockedEditField) {
+      return
+    }
+
     setForm((current) => ({ ...current, [field]: value }))
     setSubmitError("")
   }
@@ -157,6 +176,10 @@ export const useGenerateAssignmentPage = () => {
     sectionId: string,
     patch: Partial<GeneratorFormState["sections"][number]>
   ) => {
+    if (isEditMode) {
+      return
+    }
+
     setForm((current) => ({
       ...current,
       sections: current.sections.map((section) =>
@@ -166,6 +189,10 @@ export const useGenerateAssignmentPage = () => {
   }
 
   const addSection = () => {
+    if (isEditMode) {
+      return
+    }
+
     setForm((current) => ({
       ...current,
       sections: [...current.sections, createGeneratorSection("LONG")],
@@ -173,6 +200,10 @@ export const useGenerateAssignmentPage = () => {
   }
 
   const removeSection = (sectionId: string) => {
+    if (isEditMode) {
+      return
+    }
+
     setForm((current) => ({
       ...current,
       sections:
@@ -203,13 +234,11 @@ export const useGenerateAssignmentPage = () => {
             await createAssignment({
               title: form.title.trim(),
               dueDate: new Date(form.dueDate).toISOString(),
-              instructions:
-                form.additionalInfo.trim() ||
-                "Generate a balanced assignment based on the configured sections.",
+              instructions: form.assignmentInstruction.trim(),
               sections: form.sections.map((section, index) => ({
                 sectionId: `section-${index + 1}`,
                 title: formatSectionLabel(section.label, index),
-                instruction: `Create ${section.count} ${section.label.toLowerCase()} with ${section.difficulty} difficulty.`,
+                instruction: section.instruction.trim(),
                 questionConfig: {
                   type: section.questionType,
                   count: section.count,

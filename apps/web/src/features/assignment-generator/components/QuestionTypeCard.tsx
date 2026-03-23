@@ -2,9 +2,11 @@ import { MinusIcon, PlusIcon, XIcon } from "lucide-react"
 
 import { generatorDifficultyOptions, generatorQuestionOptions } from "@/features/assignment-generator/lib/generator-config"
 import type { GeneratorSectionFormItem } from "@/features/assignment-generator/types/generator.types"
+import { Textarea } from "@/components/ui/textarea"
 
 type QuestionTypeCardProps = {
   canRemove: boolean
+  isLocked?: boolean
   section: GeneratorSectionFormItem
   onRemove: (sectionId: string) => void
   onUpdate: (
@@ -17,6 +19,7 @@ const clampValue = (value: number) => Math.max(1, value)
 
 export const QuestionTypeCard = ({
   canRemove,
+  isLocked = false,
   section,
   onRemove,
   onUpdate,
@@ -26,6 +29,7 @@ export const QuestionTypeCard = ({
       <div className="flex items-start gap-3">
         <select
           className="h-12 flex-1 rounded-full border border-border bg-background px-4 text-sm text-foreground outline-none"
+          disabled={isLocked}
           onChange={(event) => {
             const nextType = event.target.value as GeneratorSectionFormItem["questionType"]
             const option = generatorQuestionOptions.find((item) => item.value === nextType)
@@ -42,7 +46,7 @@ export const QuestionTypeCard = ({
 
         <button
           className="flex size-12 shrink-0 items-center justify-center rounded-full border border-transparent text-muted-foreground transition hover:border-border/60 hover:bg-muted hover:text-foreground disabled:opacity-40"
-          disabled={!canRemove}
+          disabled={isLocked || !canRemove}
           onClick={() => onRemove(section.id)}
           type="button"
         >
@@ -50,13 +54,26 @@ export const QuestionTypeCard = ({
         </button>
       </div>
 
+      <label className="mt-3 block space-y-2 sm:mt-4">
+        <span className="text-sm font-medium text-foreground">Section Instruction</span>
+        <Textarea
+          className="min-h-20 rounded-2xl border border-border bg-background px-4 py-3 text-sm"
+          disabled={isLocked}
+          onChange={(event) => onUpdate(section.id, { instruction: event.target.value })}
+          placeholder="For example: Attempt only 2 questions."
+          value={section.instruction}
+        />
+      </label>
+
       <div className="mt-3.5 grid gap-3 sm:mt-4 sm:grid-cols-[1fr_150px_150px] sm:gap-4">
         <CounterField
+          disabled={isLocked}
           label="No. of Questions"
           onChange={(value) => onUpdate(section.id, { count: value })}
           value={section.count}
         />
         <CounterField
+          disabled={isLocked}
           label="Marks"
           onChange={(value) => onUpdate(section.id, { marksPerQuestion: value })}
           value={section.marksPerQuestion}
@@ -65,6 +82,7 @@ export const QuestionTypeCard = ({
           <span className="text-sm font-medium text-foreground">Difficulty</span>
           <select
             className="h-12 w-full rounded-full border border-border bg-background px-4 text-sm text-foreground outline-none"
+            disabled={isLocked}
             onChange={(event) =>
               onUpdate(section.id, {
                 difficulty: event.target.value as GeneratorSectionFormItem["difficulty"],
@@ -86,18 +104,20 @@ export const QuestionTypeCard = ({
 }
 
 type CounterFieldProps = {
+  disabled?: boolean
   label: string
   value: number
   onChange: (value: number) => void
 }
 
-const CounterField = ({ label, value, onChange }: CounterFieldProps) => {
+const CounterField = ({ disabled = false, label, value, onChange }: CounterFieldProps) => {
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">{label}</p>
       <div className="flex h-12 items-center justify-between rounded-full bg-muted/70 px-3">
         <button
-          className="flex size-8 items-center justify-center rounded-full transition hover:bg-background"
+          className="flex size-8 items-center justify-center rounded-full transition hover:bg-background disabled:opacity-40"
+          disabled={disabled}
           onClick={() => onChange(clampValue(value - 1))}
           type="button"
         >
@@ -105,7 +125,8 @@ const CounterField = ({ label, value, onChange }: CounterFieldProps) => {
         </button>
         <span className="text-base font-semibold text-foreground">{value}</span>
         <button
-          className="flex size-8 items-center justify-center rounded-full transition hover:bg-background"
+          className="flex size-8 items-center justify-center rounded-full transition hover:bg-background disabled:opacity-40"
+          disabled={disabled}
           onClick={() => onChange(clampValue(value + 1))}
           type="button"
         >
