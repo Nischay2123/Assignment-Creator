@@ -44,6 +44,11 @@ export interface CreateAssignmentInput {
   sourceMaterial?: AssignmentSourceMaterial;
 }
 
+export interface UpdateAssignmentInput {
+  instructions?: string;
+  sourceMaterial?: AssignmentSourceMaterial;
+}
+
 export interface AssignmentResponse {
   id: string;
   title: string;

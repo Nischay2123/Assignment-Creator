@@ -19,3 +19,6 @@ assignmentRoutes.get("/", asyncHandler((req, res) =>
 assignmentRoutes.get("/:id", asyncHandler((req, res) =>
   assignmentController.getById(req, res)
 ));
+assignmentRoutes.put("/:id", asyncHandler((req, res) =>
+  assignmentController.update(req, res)
+));

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 
 import {
   useCreateAssignmentMutation,
+  useUpdateAssignmentMutation,
   useCreateGenerationMutation,
   useGetAssignmentsQuery,
 } from "@/features/assignments/api/assignmentApi"
@@ -96,6 +97,7 @@ export const useGenerateAssignmentPage = () => {
   const [submitSuccess, setSubmitSuccess] = useState("")
 
   const [createAssignment, createAssignmentState] = useCreateAssignmentMutation()
+  const [updateAssignment, updateAssignmentState] = useUpdateAssignmentMutation()
   const [createGeneration, createGenerationState] = useCreateGenerationMutation()
   const assignmentsQuery = useGetAssignmentsQuery()
 
@@ -115,6 +117,7 @@ export const useGenerateAssignmentPage = () => {
   const errors = getFormErrors(form)
   const isSubmitting =
     createAssignmentState.isLoading ||
+    updateAssignmentState.isLoading ||
     createGenerationState.isLoading ||
     isHydratingForm
 
@@ -251,6 +254,18 @@ export const useGenerateAssignmentPage = () => {
                 : undefined,
             }).unwrap()
           ).id
+
+      // If in edit mode, update the assignment with new additional info/file
+      if (isEditMode && editingAssignment) {
+        await updateAssignment({
+          id: assignmentId,
+          payload: {
+            sourceMaterial: form.sourceFileName
+              ? { type: "file", content: form.sourceFileName }
+              : undefined,
+          },
+        }).unwrap()
+      }
 
       const generation = await createGeneration({
         assignmentId,

@@ -34,6 +34,7 @@ export type AssignmentDetailsViewModel = {
   isGenerating: boolean
   isLoading: boolean
   isNotFound: boolean
+  isRefetching: boolean
   hasError: boolean
   infoItems: AssignmentInfoItem[]
   sections: SectionInfoItem[]
@@ -41,6 +42,7 @@ export type AssignmentDetailsViewModel = {
   onBack: () => void
   onGenerate: () => Promise<void>
   onEdit: () => void
+  onRefetch: () => Promise<void>
 }
 
 export const toSectionInfoItems = (sections: AssignmentSectionInput[]): SectionInfoItem[] => {

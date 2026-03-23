@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { RefreshCwIcon } from "lucide-react"
 import { AssignmentOverviewCard } from "@/features/assignment-details/components/AssignmentOverviewCard"
 import { GenerationVersionsTable } from "@/features/assignment-details/components/GenerationVersionsTable"
 import { useAssignmentDetailsPage } from "@/features/assignment-details/hooks/useAssignmentDetailsPage"
@@ -61,6 +62,24 @@ export const AssignmentDetailsPageView = ({ model }: AssignmentDetailsPageViewPr
         </Button>
         <Button onClick={model.onEdit} size="lg" variant="outline">
           Edit
+        </Button>
+        <Button
+          disabled={model.isRefetching}
+          onClick={model.onRefetch}
+          size="lg"
+          variant="outline"
+        >
+          {model.isRefetching ? (
+            <>
+              <RefreshCwIcon className="mr-2 size-4 animate-spin" />
+              Refetching...
+            </>
+          ) : (
+            <>
+              <RefreshCwIcon className="mr-2 size-4" />
+              Refetch
+            </>
+          )}
         </Button>
       </section>
 

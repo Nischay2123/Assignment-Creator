@@ -2,7 +2,8 @@ import { HttpError } from "../../common/errors/http-error.js";
 import type {
   AssignmentDocument,
   AssignmentResponse,
-  CreateAssignmentInput
+  CreateAssignmentInput,
+  UpdateAssignmentInput
 } from "../../common/types/assignment.types.js";
 import { AssignmentModel } from "./assignment.model.js";
 
@@ -36,6 +37,16 @@ export class AssignmentService {
 
   async getAssignmentById(id: string): Promise<AssignmentResponse> {
     const assignment = await AssignmentModel.findById(id);
+
+    if (!assignment) {
+      throw new HttpError(404, "Assignment not found");
+    }
+
+    return toAssignmentResponse(assignment);
+  }
+
+  async updateAssignment(id: string, payload: UpdateAssignmentInput): Promise<AssignmentResponse> {
+    const assignment = await AssignmentModel.findByIdAndUpdate(id, payload, { new: true });
 
     if (!assignment) {
       throw new HttpError(404, "Assignment not found");

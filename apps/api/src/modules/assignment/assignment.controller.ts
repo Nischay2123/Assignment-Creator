@@ -3,12 +3,14 @@ import type { Request, Response } from "express";
 import type { ApiSuccessResponse } from "../../common/types/user.types.js";
 import type {
   AssignmentResponse,
-  CreateAssignmentInput
+  CreateAssignmentInput,
+  UpdateAssignmentInput
 } from "../../common/types/assignment.types.js";
 import { AssignmentService } from "./assignment.service.js";
 import {
   assignmentParamsSchema,
-  createAssignmentSchema
+  createAssignmentSchema,
+  updateAssignmentSchema
 } from "./assignment.validation.js";
 
 const assignmentService = new AssignmentService();
@@ -39,6 +41,17 @@ export class AssignmentController {
   ) {
     const { id } = assignmentParamsSchema.parse(req.params);
     const result = await assignmentService.getAssignmentById(id);
+
+    return res.status(200).json({ data: result });
+  }
+
+  async update(
+    req: Request,
+    res: Response<ApiSuccessResponse<AssignmentResponse>>
+  ) {
+    const { id } = assignmentParamsSchema.parse(req.params);
+    const payload: UpdateAssignmentInput = updateAssignmentSchema.parse(req.body);
+    const result = await assignmentService.updateAssignment(id, payload);
 
     return res.status(200).json({ data: result });
   }

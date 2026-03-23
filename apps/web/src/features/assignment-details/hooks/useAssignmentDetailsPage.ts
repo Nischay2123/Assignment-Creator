@@ -107,7 +107,12 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
     navigate("/assignments")
   }
 
+  const onRefetch = async () => {
+    await Promise.all([assignmentsQuery.refetch(), generationsQuery.refetch()])
+  }
+
   const isLoading = assignmentsQuery.isLoading || generationsQuery.isLoading
+  const isRefetching = assignmentsQuery.isFetching || generationsQuery.isFetching
   const hasError = Boolean(assignmentsQuery.error || generationsQuery.error)
 
   return {
@@ -116,6 +121,7 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
     isGenerating: createGenerationState.isLoading,
     isLoading,
     isNotFound: !isLoading && !assignment,
+    isRefetching,
     hasError,
     infoItems,
     sections,
@@ -123,5 +129,6 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
     onBack,
     onGenerate,
     onEdit,
+    onRefetch,
   }
 }

@@ -19,6 +19,11 @@ export type CreateAssignmentPayload = {
   sourceMaterial?: SourceMaterialInput
 }
 
+export type UpdateAssignmentPayload = {
+  instructions?: string
+  sourceMaterial?: SourceMaterialInput
+}
+
 export type CreateGenerationPayload = {
   assignmentId: string
   promptOverride?: string
@@ -45,6 +50,15 @@ export const assignmentApi = baseApi.injectEndpoints({
       invalidatesTags: ["Assignments"],
       transformResponse: (response: ApiResponse<AssignmentRecord>) => response.data,
     }),
+    updateAssignment: builder.mutation<AssignmentRecord, { id: string; payload: UpdateAssignmentPayload }>({
+      query: ({ id, payload }) => ({
+        url: `assignments/${id}`,
+        method: "PUT",
+        body: payload,
+      }),
+      invalidatesTags: ["Assignments"],
+      transformResponse: (response: ApiResponse<AssignmentRecord>) => response.data,
+    }),
     createGeneration: builder.mutation<CreateGenerationResult, CreateGenerationPayload>({
       query: (payload) => ({
         url: "generations",
@@ -59,6 +73,7 @@ export const assignmentApi = baseApi.injectEndpoints({
 
 export const {
   useCreateAssignmentMutation,
+  useUpdateAssignmentMutation,
   useCreateGenerationMutation,
   useGetAssignmentsQuery,
   useGetGenerationsQuery,

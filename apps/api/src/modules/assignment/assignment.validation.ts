@@ -33,4 +33,10 @@ export const createAssignmentSchema = z.object({
   sourceMaterial: sourceMaterialSchema.optional()
 });
 
+export const updateAssignmentSchema = z.object({
+  instructions: z.string().trim().min(1, "Instructions are required").optional(),
+  sourceMaterial: sourceMaterialSchema.optional()
+});
+
 export type CreateAssignmentPayload = z.infer<typeof createAssignmentSchema>;
+export type UpdateAssignmentPayload = z.infer<typeof updateAssignmentSchema>;

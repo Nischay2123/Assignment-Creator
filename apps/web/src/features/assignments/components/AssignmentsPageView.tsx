@@ -27,6 +27,17 @@ export const AssignmentsPageView = ({ model }: AssignmentsPageViewProps) => {
       </section>
 
       <div className="mt-5 space-y-5">
+        <AssignmentsToolbar
+          filterOptions={model.filterOptions}
+          isFilterMenuOpen={model.isFilterMenuOpen}
+          onCreateAssignment={model.handleCreateAssignment}
+          onFilterMenuToggle={model.handleFilterMenuToggle}
+          onFilterSelect={model.handleFilterSelect}
+          onSearchChange={model.handleSearchChange}
+          searchValue={model.searchValue}
+          selectedFilter={model.selectedFilter}
+          selectedFilterLabel={model.selectedFilterLabel}
+        />
         {model.feedbackMessage ? (
           <div className="rounded-[24px] border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm">
             {model.feedbackMessage}
@@ -46,28 +57,15 @@ export const AssignmentsPageView = ({ model }: AssignmentsPageViewProps) => {
         ) : null}
 
         {hasAssignments ? (
-          <>
-            <AssignmentsToolbar
-              filterOptions={model.filterOptions}
-              isFilterMenuOpen={model.isFilterMenuOpen}
-              onCreateAssignment={model.handleCreateAssignment}
-              onFilterMenuToggle={model.handleFilterMenuToggle}
-              onFilterSelect={model.handleFilterSelect}
-              onSearchChange={model.handleSearchChange}
-              searchValue={model.searchValue}
-              selectedFilter={model.selectedFilter}
-              selectedFilterLabel={model.selectedFilterLabel}
-            />
 
-            <AssignmentsGrid
-              assignments={model.assignments}
-              isGenerating={model.isGenerating}
-              onOpenDetails={model.handleOpenAssignmentDetails}
-              onMenuToggle={model.handleAssignmentMenuToggle}
-              onRegenerate={model.handleRegenerateAssignment}
-              openMenuId={model.openMenuId}
-            />
-          </>
+          <AssignmentsGrid
+            assignments={model.assignments}
+            isGenerating={model.isGenerating}
+            onOpenDetails={model.handleOpenAssignmentDetails}
+            onMenuToggle={model.handleAssignmentMenuToggle}
+            onRegenerate={model.handleRegenerateAssignment}
+            openMenuId={model.openMenuId}
+          />
         ) : (
           !model.isLoading && (
             <AssignmentsEmptyState
