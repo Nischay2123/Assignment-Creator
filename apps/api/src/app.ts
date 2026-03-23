@@ -8,7 +8,16 @@ import { userRoutes } from "./modules/user/user.routes.js";
 export const createApp = () => {
   const app = express();
 
-  app.use(cors());
+  const corsOptions = {
+    origin: [
+      "http://localhost:5173",
+      process.env.CLIENT_URL,
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  };
+
+  app.use(cors(corsOptions as cors.CorsOptions));
   app.use(express.json());
   app.use((req, res, next) => {
     const startedAt = Date.now();
