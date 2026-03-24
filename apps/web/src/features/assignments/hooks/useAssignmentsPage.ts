@@ -6,6 +6,7 @@ import {
   useGetAssignmentsQuery,
   useGetGenerationsQuery,
 } from "@/features/assignments/api/assignmentApi"
+import { useGenerationNotifications } from "@/features/assignments/hooks/useGenerationNotifications"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { toAssignmentListItem } from "@/features/assignments/lib/assignment-utils"
 import type {
@@ -152,6 +153,24 @@ export const useAssignmentsPage = () => {
       setFeedbackMessage(error?.data?.message || "Unable to regenerate assignment.")
     }
   }
+
+  useGenerationNotifications({
+    onEvent: (event) => {
+      generationsQuery.refetch()
+
+      if (event.status === "completed") {
+        setFeedbackMessage("Generation completed successfully.")
+        return
+      }
+
+      if (event.status === "failed") {
+        setFeedbackMessage(event.error || "Generation failed.")
+        return
+      }
+
+      setFeedbackMessage("Generation is processing.")
+    },
+  })
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {

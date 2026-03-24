@@ -26,7 +26,6 @@ export type UpdateAssignmentPayload = {
 
 export type CreateGenerationPayload = {
   assignmentId: string
-  promptOverride?: string
 }
 
 export const assignmentApi = baseApi.injectEndpoints({
@@ -65,7 +64,7 @@ export const assignmentApi = baseApi.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["Generations"],
+      invalidatesTags: [],
       transformResponse: (response: ApiResponse<CreateGenerationResult>) => response.data,
     }),
   }),

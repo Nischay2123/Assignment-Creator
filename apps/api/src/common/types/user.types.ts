@@ -71,6 +71,10 @@ export interface LoginSuccessResponse {
   token: string;
 }
 
+export interface LogoutSuccessResponse {
+  message: string;
+}
+
 export interface JwtPayload {
   _id: Types.ObjectId;
   email: string;

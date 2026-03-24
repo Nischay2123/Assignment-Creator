@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
 import {
@@ -6,6 +6,7 @@ import {
   useGetAssignmentsQuery,
   useGetGenerationsQuery,
 } from "@/features/assignments/api/assignmentApi"
+import { useGenerationNotifications } from "@/features/assignments/hooks/useGenerationNotifications"
 import { formatAssignmentDate } from "@/features/assignments/lib/assignment-utils"
 import {
   getAssignmentById,
@@ -88,8 +89,7 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
 
     try {
       const result = await createGeneration({ assignmentId: assignment.id }).unwrap()
-      setFeedbackMessage(`Generation ${result.generation.version} started successfully.`)
-      generationsQuery.refetch()
+      setFeedbackMessage(result.message)
     } catch (error: any) {
       setFeedbackMessage(error?.data?.message || "Unable to generate right now.")
     }
@@ -110,6 +110,33 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
   const onRefetch = async () => {
     await Promise.all([assignmentsQuery.refetch(), generationsQuery.refetch()])
   }
+
+  useGenerationNotifications({
+    enabled: Boolean(assignmentId),
+    onEvent: (event) => {
+      if (!assignmentId || event.assignmentId !== assignmentId) {
+        return
+      }
+
+      generationsQuery.refetch()
+
+      if (event.status === "completed") {
+        setFeedbackMessage("Generation completed successfully.")
+        return
+      }
+
+      if (event.status === "failed") {
+        setFeedbackMessage(event.error || "Generation failed.")
+        return
+      }
+
+      setFeedbackMessage("Generation is processing.")
+    },
+  })
+
+  useEffect(() => {
+    setFeedbackMessage("")
+  }, [assignmentId])
 
   const isLoading = assignmentsQuery.isLoading || generationsQuery.isLoading
   const isRefetching = assignmentsQuery.isFetching || generationsQuery.isFetching

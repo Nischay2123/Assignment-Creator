@@ -7,8 +7,7 @@ export const generationParamsSchema = z.object({
 });
 
 export const createGenerationSchema = z.object({
-  assignmentId: objectIdSchema,
-  promptOverride: z.string().trim().min(1, "Prompt override cannot be empty").optional()
+  assignmentId: objectIdSchema
 });
 
 export type CreateGenerationPayload = z.infer<typeof createGenerationSchema>;

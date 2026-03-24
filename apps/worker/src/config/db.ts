@@ -4,7 +4,7 @@ import { env } from "./env.js";
 
 export const mongoConnectionManager = createMongoConnectionManager({
   uri: env.MONGODB_URI,
-  name: "api-mongo-manager"
+  name: "worker-mongo-manager"
 });
 
 export const connectDatabase = () => mongoConnectionManager.connect();

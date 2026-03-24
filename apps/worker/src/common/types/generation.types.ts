@@ -46,10 +46,6 @@ export interface Generation {
 
 export type GenerationDocument = HydratedDocument<Generation>;
 
-export interface CreateGenerationInput {
-  assignmentId: string;
-}
-
 export interface GenerationResponse {
   id: string;
   assignmentId: string;
@@ -65,13 +61,6 @@ export interface GenerationResponse {
   completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface CreateGenerationResponse {
-  message: string;
-  jobId: string;
-  queueName: string;
-  assignmentId: string;
 }
 
 export interface GenerationJobData {

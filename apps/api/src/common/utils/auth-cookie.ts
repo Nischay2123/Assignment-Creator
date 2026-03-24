@@ -14,3 +14,7 @@ const authCookieOptions: CookieOptions = {
 export const setAuthCookie = (res: Response, token: string): void => {
   res.cookie(AUTH_COOKIE_NAME, token, authCookieOptions);
 };
+
+export const clearAuthCookie = (res: Response): void => {
+  res.clearCookie(AUTH_COOKIE_NAME, authCookieOptions);
+};

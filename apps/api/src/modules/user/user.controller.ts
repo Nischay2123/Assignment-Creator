@@ -3,10 +3,11 @@ import type { Request, Response } from "express";
 import type {
   ApiSuccessResponse,
   LoginSuccessResponse,
+  LogoutSuccessResponse,
   RequestOtpResponse,
   VerifyOtpSuccessResponse
 } from "../../common/types/user.types.js";
-import { setAuthCookie } from "../../common/utils/auth-cookie.js";
+import { clearAuthCookie, setAuthCookie } from "../../common/utils/auth-cookie.js";
 import { UserService } from "./user.service.js";
 import {
   createUserSchema,
@@ -52,5 +53,18 @@ export class UserController {
     setAuthCookie(res, result.token);
 
     return res.status(200).json({ data: result });
+  }
+
+  async logout(
+    _req: Request,
+    res: Response<ApiSuccessResponse<LogoutSuccessResponse>>
+  ) {
+    clearAuthCookie(res);
+
+    return res.status(200).json({
+      data: {
+        message: "Logged out successfully"
+      }
+    });
   }
 }

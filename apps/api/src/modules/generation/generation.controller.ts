@@ -20,7 +20,7 @@ export class GenerationController {
     res: Response<ApiSuccessResponse<CreateGenerationResponse>>
   ) {
     const payload: CreateGenerationInput = createGenerationSchema.parse(req.body);
-    const result = await generationService.createGeneration(payload);
+    const result = await generationService.enqueueGeneration(payload);
 
     return res.status(201).json({ data: result });
   }

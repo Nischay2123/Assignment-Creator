@@ -54,32 +54,6 @@ const toSectionFormItems = (
   return [createGeneratorSection("MCQ")]
 }
 
-const buildPromptOverrideFromForm = (form: GeneratorFormState) => {
-  return JSON.stringify(
-    {
-      title: form.title.trim(),
-      instructions: form.assignmentInstruction.trim(),
-      dueDate: new Date(form.dueDate).toISOString(),
-      sections: form.sections.map((section, index) => ({
-        sectionId: `section-${index + 1}`,
-        title: formatSectionLabel(section.label, index),
-        instruction: section.instruction.trim(),
-        questionConfig: {
-          type: section.questionType,
-          count: section.count,
-          marksPerQuestion: section.marksPerQuestion,
-          difficulty: section.difficulty,
-        },
-      })),
-      sourceMaterial: form.sourceFileName
-        ? { type: "file", content: form.sourceFileName }
-        : form.additionalInfo.trim(),
-    },
-    null,
-    2
-  )
-}
-
 export const useGenerateAssignmentPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -130,9 +104,12 @@ export const useGenerateAssignmentPage = () => {
       title: editingAssignment.title,
       dueDate: toDateInputValue(editingAssignment.dueDate),
       assignmentInstruction: editingAssignment.instructions,
-      additionalInfo: "",
       sourceFileName:
         editingAssignment.sourceMaterial?.type === "file"
+          ? editingAssignment.sourceMaterial.content
+          : "",
+      additionalInfo:
+        editingAssignment.sourceMaterial?.type === "text"
           ? editingAssignment.sourceMaterial.content
           : "",
       sections: toSectionFormItems(
@@ -251,7 +228,9 @@ export const useGenerateAssignmentPage = () => {
               })),
               sourceMaterial: form.sourceFileName
                 ? { type: "file", content: form.sourceFileName }
-                : undefined,
+                : form.additionalInfo.trim()
+                  ? { type: "text", content: form.additionalInfo.trim() }
+                  : undefined,
             }).unwrap()
           ).id
 
@@ -262,21 +241,20 @@ export const useGenerateAssignmentPage = () => {
           payload: {
             sourceMaterial: form.sourceFileName
               ? { type: "file", content: form.sourceFileName }
-              : undefined,
+              : form.additionalInfo.trim()
+                ? { type: "text", content: form.additionalInfo.trim() }
+                : undefined,
           },
         }).unwrap()
       }
 
       const generation = await createGeneration({
         assignmentId,
-        promptOverride: isEditMode
-          ? buildPromptOverrideFromForm(form)
-          : form.additionalInfo.trim() || undefined,
       }).unwrap()
 
       const successMessage = isEditMode
-        ? `Generation v${generation.generation.version} was logged for this assignment.`
-        : `Assignment created and generation v${generation.generation.version} was logged successfully.`
+        ? generation.message
+        : `Assignment created successfully. ${generation.message}`
 
       setSubmitSuccess(successMessage)
 

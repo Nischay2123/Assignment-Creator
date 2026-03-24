@@ -16,3 +16,6 @@ userRoutes.post("/verify-otp", asyncHandler((req, res) =>
 userRoutes.post("/login", asyncHandler((req, res) =>
   userController.login(req, res)
 ));
+userRoutes.post("/logout", asyncHandler((req, res) =>
+  userController.logout(req, res)
+));

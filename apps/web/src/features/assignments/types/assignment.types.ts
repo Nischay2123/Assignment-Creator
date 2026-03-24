@@ -51,7 +51,16 @@ export type GenerationRecord = {
 
 export type CreateGenerationResult = {
   message: string
-  generation: GenerationRecord
+  jobId: string
+  queueName: string
+  assignmentId: string
+}
+
+export type GenerationSocketEvent = {
+  assignmentId: string
+  status: GenerationStatus
+  generation?: GenerationRecord
+  error?: string
 }
 
 export type AssignmentListItem = {

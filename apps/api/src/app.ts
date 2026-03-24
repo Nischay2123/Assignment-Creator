@@ -4,6 +4,7 @@ import express from "express";
 import { logger } from "@repo/logger";
 
 import { errorHandler } from "./common/middleware/error-handler.js";
+import { env } from "./config/env.js";
 import { assignmentRoutes } from "./modules/assignment/assignment.routes.js";
 import { generationRoutes } from "./modules/generation/generation.routes.js";
 import { userRoutes } from "./modules/user/user.routes.js";
@@ -14,7 +15,7 @@ export const createApp = () => {
   const corsOptions = {
     origin: [
       "http://localhost:5173",
-      process.env.CLIENT_URL,
+      env.CLIENT_URL,
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,

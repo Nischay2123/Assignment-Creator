@@ -30,7 +30,7 @@ type SidebarData = {
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   data: SidebarData
-  handleLogout: () => void
+  handleLogout: () => void | Promise<void>
 }
 
 export const AppSidebar = React.memo(function AppSidebar({

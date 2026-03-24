@@ -38,6 +38,12 @@ export interface LoginResponse {
   }  
 }
 
+export interface LogoutResponse {
+  data: {
+    message: string
+  }
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     requestOtp: builder.mutation<RequestOtpResponse, RequestOtpPayload>({
@@ -64,7 +70,19 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [],
     }),
+    logout: builder.mutation<LogoutResponse, void>({
+      query: () => ({
+        url: "users/logout",
+        method: "POST",
+      }),
+      invalidatesTags: [],
+    }),
   }),
 })
 
-export const { useRequestOtpMutation, useVerifyOtpMutation, useLoginMutation } = authApi
+export const {
+  useRequestOtpMutation,
+  useVerifyOtpMutation,
+  useLoginMutation,
+  useLogoutMutation,
+} = authApi

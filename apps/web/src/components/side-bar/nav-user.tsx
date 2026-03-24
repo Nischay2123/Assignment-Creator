@@ -13,7 +13,7 @@ type NavUserProps = {
     email: string
     avatar?: string
   }
-  handleLogout: () => void
+  handleLogout: () => void | Promise<void>
 }
 
 export const NavUser = React.memo(function NavUser({

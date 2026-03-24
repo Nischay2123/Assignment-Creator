@@ -1,7 +1,6 @@
 import { logger } from "@repo/logger";
 
 import { HttpError } from "../../common/errors/http-error.js";
-import type { AssignmentDocument } from "../../common/types/assignment.types.js";
 import type {
   CreateGenerationInput,
   CreateGenerationResponse,
@@ -10,10 +9,12 @@ import type {
 } from "../../common/types/generation.types.js";
 import { AssignmentModel } from "../assignment/assignment.model.js";
 import { GenerationModel } from "./generation.model.js";
+import { GENERATION_QUEUE_NAME } from "./generation.constants.js";
+import { addGenerationJob } from "./generation.queue.js";
 
 const generationLogger = logger.child({ module: "generation-service" });
 
-const toGenerationResponse = (
+export const toGenerationResponse = (
   generation: GenerationDocument
 ): GenerationResponse => {
   return {
@@ -34,57 +35,29 @@ const toGenerationResponse = (
   };
 };
 
-const buildPrompt = (assignment: AssignmentDocument, promptOverride?: string) => {
-  if (promptOverride) {
-    return promptOverride;
-  }
-
-  return JSON.stringify(
-    {
-      title: assignment.title,
-      instructions: assignment.instructions,
-      dueDate: assignment.dueDate,
-      sections: assignment.sections,
-      sourceMaterial: assignment.sourceMaterial
-    },
-    null,
-    2
-  );
-};
-
 export class GenerationService {
-  async createGeneration(payload: CreateGenerationInput): Promise<CreateGenerationResponse> {
+  async enqueueGeneration(payload: CreateGenerationInput): Promise<CreateGenerationResponse> {
     const assignment = await AssignmentModel.findById(payload.assignmentId);
 
     if (!assignment) {
       throw new HttpError(404, "Assignment not found");
     }
 
-    const latestGeneration = await GenerationModel.findOne({
-      assignmentId: assignment._id
-    }).sort({ version: -1 });
-
-    const version = latestGeneration ? latestGeneration.version + 1 : 1;
-    const prompt = buildPrompt(assignment, payload.promptOverride);
-
-    const generation = await GenerationModel.create({
-      assignmentId: assignment._id,
-      version,
-      status: "queued",
-      pdfStatus: "pending",
-      prompt
+    const job = await addGenerationJob({
+      assignmentId: assignment._id.toString()
     });
 
-    generationLogger.info("Generation request logged instead of queued", {
-      generationId: generation._id.toString(),
+    generationLogger.info("Generation request queued", {
+      jobId: job.id?.toString(),
       assignmentId: assignment._id.toString(),
-      version,
-      queuePlaceholder: true
+      queueName: GENERATION_QUEUE_NAME
     });
 
     return {
-      message: "Generation created and logged. Queue integration is pending.",
-      generation: toGenerationResponse(generation)
+      message: "Generation queued successfully.",
+      jobId: job.id?.toString() ?? "",
+      queueName: GENERATION_QUEUE_NAME,
+      assignmentId: assignment._id.toString()
     };
   }
 

@@ -4,17 +4,29 @@ import { ClipboardListIcon, WandSparklesIcon } from "lucide-react"
 
 import { AppSidebar } from "@/components/side-bar/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { useLogoutMutation } from "@/features/auth/api/authApi"
 import { useAuthSession } from "@/features/auth/hooks/useAuthSession"
+import { baseApi } from "@/redux/apis/baseApi"
+import { useAppDispatch } from "@/redux/hooks"
 
 export const ProtectedAppLayout = () => {
   const { user, isLoggedIn, logout } = useAuthSession()
   const location = useLocation()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const [logoutUser] = useLogoutMutation()
 
-  const handleLogout = useCallback(() => {
-    logout()
-    navigate("/login")
-  }, [logout, navigate])
+  const handleLogout = useCallback(async () => {
+    try {
+      await logoutUser().unwrap()
+    } catch {
+      // Always clear the local session so the user is not stuck in a broken logout state.
+    } finally {
+      logout()
+      dispatch(baseApi.util.resetApiState())
+      navigate("/login")
+    }
+  }, [dispatch, logout, logoutUser, navigate])
 
   const sidebarData = useMemo(
     () => ({
