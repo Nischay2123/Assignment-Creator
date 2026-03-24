@@ -6,8 +6,13 @@ import {
   useUpdateAssignmentMutation,
   useCreateGenerationMutation,
   useGetAssignmentsQuery,
+  useGetGenerationsQuery,
 } from "@/features/assignments/api/assignmentApi"
 import { createGeneratorSection } from "@/features/assignment-generator/lib/generator-config"
+import {
+  countGenerationsForAssignment,
+  trackPendingGeneration,
+} from "@/features/assignments/lib/pending-generations"
 import type {
   GeneratorFormErrors,
   GeneratorSectionFormItem,
@@ -74,6 +79,7 @@ export const useGenerateAssignmentPage = () => {
   const [updateAssignment, updateAssignmentState] = useUpdateAssignmentMutation()
   const [createGeneration, createGenerationState] = useCreateGenerationMutation()
   const assignmentsQuery = useGetAssignmentsQuery()
+  const generationsQuery = useGetGenerationsQuery()
 
   const editingAssignment = useMemo(() => {
     if (!requestedAssignmentId) {
@@ -248,9 +254,15 @@ export const useGenerateAssignmentPage = () => {
         }).unwrap()
       }
 
+      const previousCount = countGenerationsForAssignment(
+        assignmentId,
+        generationsQuery.data ?? []
+      )
+
       const generation = await createGeneration({
         assignmentId,
       }).unwrap()
+      trackPendingGeneration(assignmentId, previousCount)
 
       const successMessage = isEditMode
         ? generation.message

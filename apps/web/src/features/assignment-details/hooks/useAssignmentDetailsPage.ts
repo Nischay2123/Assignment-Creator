@@ -7,6 +7,11 @@ import {
   useGetGenerationsQuery,
 } from "@/features/assignments/api/assignmentApi"
 import { useGenerationNotifications } from "@/features/assignments/hooks/useGenerationNotifications"
+import { usePendingGenerationSync } from "@/features/assignments/hooks/usePendingGenerationSync"
+import {
+  countGenerationsForAssignment,
+  trackPendingGeneration,
+} from "@/features/assignments/lib/pending-generations"
 import { formatAssignmentDate } from "@/features/assignments/lib/assignment-utils"
 import {
   getAssignmentById,
@@ -88,7 +93,12 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
     setFeedbackMessage("")
 
     try {
+      const previousCount = countGenerationsForAssignment(
+        assignment.id,
+        generationsQuery.data ?? []
+      )
       const result = await createGeneration({ assignmentId: assignment.id }).unwrap()
+      trackPendingGeneration(assignment.id, previousCount)
       setFeedbackMessage(result.message)
     } catch (error: any) {
       setFeedbackMessage(error?.data?.message || "Unable to generate right now.")
@@ -118,8 +128,6 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
         return
       }
 
-      generationsQuery.refetch()
-
       if (event.status === "completed") {
         setFeedbackMessage("Generation completed successfully.")
         return
@@ -132,6 +140,12 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
 
       setFeedbackMessage("Generation is processing.")
     },
+  })
+
+  usePendingGenerationSync({
+    enabled: Boolean(assignmentId),
+    generations: generationsQuery.data ?? [],
+    refetchGenerations: generationsQuery.refetch,
   })
 
   useEffect(() => {

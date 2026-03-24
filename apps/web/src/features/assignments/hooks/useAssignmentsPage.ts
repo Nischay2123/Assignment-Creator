@@ -7,6 +7,11 @@ import {
   useGetGenerationsQuery,
 } from "@/features/assignments/api/assignmentApi"
 import { useGenerationNotifications } from "@/features/assignments/hooks/useGenerationNotifications"
+import { usePendingGenerationSync } from "@/features/assignments/hooks/usePendingGenerationSync"
+import {
+  countGenerationsForAssignment,
+  trackPendingGeneration,
+} from "@/features/assignments/lib/pending-generations"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { toAssignmentListItem } from "@/features/assignments/lib/assignment-utils"
 import type {
@@ -146,7 +151,12 @@ export const useAssignmentsPage = () => {
     setFeedbackMessage("")
 
     try {
+      const previousCount = countGenerationsForAssignment(
+        assignmentId,
+        generationsQuery.data ?? []
+      )
       const result = await createGeneration({ assignmentId }).unwrap()
+      trackPendingGeneration(assignmentId, previousCount)
       setFeedbackMessage(result.message)
       setOpenMenuId(null)
     } catch (error: any) {
@@ -156,8 +166,6 @@ export const useAssignmentsPage = () => {
 
   useGenerationNotifications({
     onEvent: (event) => {
-      generationsQuery.refetch()
-
       if (event.status === "completed") {
         setFeedbackMessage("Generation completed successfully.")
         return
@@ -170,6 +178,11 @@ export const useAssignmentsPage = () => {
 
       setFeedbackMessage("Generation is processing.")
     },
+  })
+
+  usePendingGenerationSync({
+    generations: generationsQuery.data ?? [],
+    refetchGenerations: generationsQuery.refetch,
   })
 
   useEffect(() => {
