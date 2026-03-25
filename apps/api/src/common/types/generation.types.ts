@@ -69,6 +69,7 @@ export interface GenerationResponse {
 
 export interface CreateGenerationResponse {
   message: string;
+  generation: GenerationResponse;
   jobId: string;
   queueName: string;
   assignmentId: string;
@@ -76,6 +77,7 @@ export interface CreateGenerationResponse {
 
 export interface GenerationJobData {
   assignmentId: string;
+  generationId: string;
 }
 
 export interface CreateGenerationJobResult {

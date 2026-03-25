@@ -38,3 +38,18 @@ export const clearAuthSession = (): void => {
   localStorage.removeItem(AUTH_USER_KEY)
   localStorage.removeItem(AUTH_TOKEN_KEY)
 }
+
+export const clearBrowserSession = (): void => {
+  localStorage.clear()
+  sessionStorage.clear()
+
+  document.cookie.split(";").forEach((cookie) => {
+    const cookieName = cookie.split("=")[0]?.trim()
+
+    if (!cookieName) {
+      return
+    }
+
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+  })
+}

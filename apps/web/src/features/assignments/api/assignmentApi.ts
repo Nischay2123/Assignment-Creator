@@ -64,7 +64,7 @@ export const assignmentApi = baseApi.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: [],
+      invalidatesTags: ["Generations"],
       transformResponse: (response: ApiResponse<CreateGenerationResult>) => response.data,
     }),
   }),

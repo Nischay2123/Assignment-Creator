@@ -8,6 +8,7 @@ import type {
   GenerationResponse
 } from "../../common/types/generation.types.js";
 import { AssignmentModel } from "../assignment/assignment.model.js";
+import { publishGenerationEvent } from "./generation.events.js";
 import { GenerationModel } from "./generation.model.js";
 import { GENERATION_QUEUE_NAME } from "./generation.constants.js";
 import { addGenerationJob } from "./generation.queue.js";
@@ -43,18 +44,41 @@ export class GenerationService {
       throw new HttpError(404, "Assignment not found");
     }
 
+    const latestGeneration = await GenerationModel.findOne({
+      assignmentId: assignment._id
+    }).sort({ version: -1 });
+    const version = latestGeneration ? latestGeneration.version + 1 : 1;
+
+    const generation = await GenerationModel.create({
+      assignmentId: assignment._id,
+      version,
+      status: "queued",
+      pdfStatus: "pending"
+    });
+
     const job = await addGenerationJob({
-      assignmentId: assignment._id.toString()
+      assignmentId: assignment._id.toString(),
+      generationId: generation._id.toString()
+    });
+
+    const response = toGenerationResponse(generation);
+
+    await publishGenerationEvent({
+      assignmentId: assignment._id.toString(),
+      status: "queued",
+      generation: response
     });
 
     generationLogger.info("Generation request queued", {
       jobId: job.id?.toString(),
       assignmentId: assignment._id.toString(),
+      generationId: generation._id.toString(),
       queueName: GENERATION_QUEUE_NAME
     });
 
     return {
       message: "Generation queued successfully.",
+      generation: response,
       jobId: job.id?.toString() ?? "",
       queueName: GENERATION_QUEUE_NAME,
       assignmentId: assignment._id.toString()

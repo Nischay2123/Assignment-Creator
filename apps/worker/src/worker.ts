@@ -30,7 +30,8 @@ const bootstrap = async () => {
   worker.on("completed", (job) => {
     workerLogger.info("Generation job completed", {
       jobId: job.id,
-      assignmentId: job.data.assignmentId
+      assignmentId: job.data.assignmentId,
+      generationId: job.data.generationId
     });
   });
 
@@ -38,6 +39,7 @@ const bootstrap = async () => {
     workerLogger.error("Generation job failed", {
       jobId: job?.id,
       assignmentId: job?.data.assignmentId,
+      generationId: job?.data.generationId,
       error: error.message
     });
   });

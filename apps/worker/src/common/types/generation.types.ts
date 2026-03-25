@@ -65,9 +65,14 @@ export interface GenerationResponse {
 
 export interface GenerationJobData {
   assignmentId: string;
+  generationId: string;
 }
 
-export interface CreateGenerationJobResult {
+export interface GenerateRawResponseResult {
+  rawResponse: string;
+}
+
+export interface GenerateAssignmentResult {
   rawResponse: string;
   result: GenerationResult;
 }

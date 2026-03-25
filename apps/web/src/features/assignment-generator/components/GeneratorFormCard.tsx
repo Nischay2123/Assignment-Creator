@@ -89,7 +89,17 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
               </p>
 
               <p className="mt-1 max-w-md mx-auto text-sm leading-6 text-muted-foreground">
-                The UI is ready now. Backend file processing can be added next.
+                Upload a file to guide the question paper generation/ Assignment creation. This can be:
+              </p>
+
+              <ul className="mt-2 max-w-md mx-auto text-sm leading-6 text-muted-foreground space-y-1">
+                <li>
+                  📘 A <strong>source document</strong> (e.g., notes, textbook, syllabus) from which questions will be generated
+                </li>
+              </ul>
+
+              <p className="mt-2 max-w-md mx-auto text-sm leading-6 text-muted-foreground">
+                You can drag and drop your file here or click <strong>Browse Files</strong> to upload.
               </p>
 
               <label className="mt-4 inline-flex cursor-pointer items-center rounded-xl bg-muted px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted/80 sm:mt-5">

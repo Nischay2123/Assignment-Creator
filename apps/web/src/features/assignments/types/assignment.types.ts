@@ -51,6 +51,7 @@ export type GenerationRecord = {
 
 export type CreateGenerationResult = {
   message: string
+  generation: GenerationRecord
   jobId: string
   queueName: string
   assignmentId: string

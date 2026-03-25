@@ -23,6 +23,8 @@ const getFormErrors = (form: GeneratorFormState): GeneratorFormErrors => {
   const hasInvalidSections =
     form.sections.length === 0 ||
     form.sections.some((section) => !section.instruction.trim())
+  const hasSourceContext =
+    Boolean(form.sourceFileName.trim()) || Boolean(form.additionalInfo.trim())
 
   return {
     title: form.title.trim() ? "" : "Assignment title is required.",
@@ -30,7 +32,9 @@ const getFormErrors = (form: GeneratorFormState): GeneratorFormErrors => {
     assignmentInstruction: form.assignmentInstruction.trim()
       ? ""
       : "Assignment instruction is required.",
-    additionalInfo: "",
+    additionalInfo: hasSourceContext
+      ? ""
+      : "Add either a reference file or additional information.",
     sections: hasInvalidSections
       ? "Add at least one section and provide section instructions."
       : "",

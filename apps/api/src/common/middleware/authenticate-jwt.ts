@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 import { HttpError } from "../errors/http-error.js";
-import { AUTH_COOKIE_NAME } from "../utils/auth-cookie.js";
+import { AUTH_COOKIE_NAME, clearAuthCookie } from "../utils/auth-cookie.js";
 import { env } from "../../config/env.js";
 
 const isAuthenticatedPayload = (
@@ -22,6 +22,7 @@ export const authenticateJwt = (
   const token = req.cookies?.[AUTH_COOKIE_NAME];
 
   if (!token) {
+    clearAuthCookie(_res);
     return next(new HttpError(401, "Authentication required"));
   }
 
@@ -29,6 +30,7 @@ export const authenticateJwt = (
     const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET);
 
     if (!isAuthenticatedPayload(decoded)) {
+      clearAuthCookie(_res);
       return next(new HttpError(401, "Invalid authentication token"));
     }
 
@@ -40,6 +42,7 @@ export const authenticateJwt = (
 
     return next();
   } catch {
+    clearAuthCookie(_res);
     return next(new HttpError(401, "Invalid or expired authentication token"));
   }
 };
