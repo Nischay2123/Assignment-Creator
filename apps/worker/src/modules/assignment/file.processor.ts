@@ -5,6 +5,13 @@ import { PDFParse } from "pdf-parse";
 
 import type { AssignmentDocument } from "../../common/types/assignment.types.js";
 import type { FileProcessingJobData } from "../../common/types/file-processing.types.js";
+import { extractTextFromPdfImages, estimatePdfHasImages } from "../../common/services/ocr.service.js";
+import {
+  buildSummarizationPrompt,
+  validateSummarizedText,
+  logSummarizationEvent
+} from "../../common/utils/text-summarizer.js";
+import { GenerationLlmService } from "../generation/generation-llm.service.js";
 import { AssignmentModel } from "./assignment.model.js";
 import { downloadAssignmentSourceFile } from "./file.service.js";
 
@@ -13,8 +20,10 @@ type SupportedFileType = "pdf" | "docx" | "txt";
 const MAX_EXTRACTED_TEXT_LENGTH = 15000;
 const MIN_EXTRACTED_TEXT_LENGTH = 200;
 const MAX_NON_ALPHANUMERIC_RATIO = 0.6;
+const TARGET_SUMMARIZED_LENGTH = 12000;
 
 const fileProcessingLogger = logger.child({ module: "worker-file-processor" });
+const generationLlmService = new GenerationLlmService();
 
 const cleanExtractedText = (text: string): string => {
   return text.replace(/\s+/g, " ").trim();
@@ -102,6 +111,111 @@ const updateFailedSourceMaterial = async (
 };
 
 export class FileProcessor {
+  /**
+   * Attempts to summarize oversized extracted text using LLM
+   * when text exceeds MAX_EXTRACTED_TEXT_LENGTH
+   */
+  private async summarizeOversizedText(
+    text: string,
+    assignment: AssignmentDocument
+  ): Promise<string> {
+    fileProcessingLogger.info("Text exceeds maximum length, attempting LLM summarization", {
+      assignmentId: assignment._id.toString(),
+      originalLength: text.length,
+      targetLength: TARGET_SUMMARIZED_LENGTH
+    });
+
+    try {
+      const summarizationPrompt = buildSummarizationPrompt(
+        text,
+        assignment.title,
+        assignment.instructions,
+        TARGET_SUMMARIZED_LENGTH
+      );
+
+      const llmResponse = await generationLlmService.generateAssignment(summarizationPrompt);
+      const summarizedText = llmResponse.rawResponse;
+
+      // Validate summarized text
+      const validation = validateSummarizedText(summarizedText);
+      if (!validation.valid) {
+        throw new Error(validation.error || "Summarized text validation failed");
+      }
+
+      const cleanedSummarized = cleanExtractedText(summarizedText);
+      const compressionRatio = cleanedSummarized.length / text.length;
+
+      logSummarizationEvent(
+        assignment._id.toString(),
+        text.length,
+        cleanedSummarized.length,
+        compressionRatio
+      );
+
+      fileProcessingLogger.info("LLM summarization succeeded", {
+        assignmentId: assignment._id.toString(),
+        originalLength: text.length,
+        summarizedLength: cleanedSummarized.length,
+        compressionRatio: `${(compressionRatio * 100).toFixed(2)}%`
+      });
+
+      return cleanedSummarized;
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "LLM summarization failed: unknown error";
+
+      fileProcessingLogger.error("LLM summarization failed", {
+        assignmentId: assignment._id.toString(),
+        error: errorMsg
+      });
+
+      // On LLM failure, truncate to MAX_EXTRACTED_TEXT_LENGTH as fallback
+      fileProcessingLogger.info("Fallback: truncating text to maximum length", {
+        assignmentId: assignment._id.toString(),
+        truncatedLength: MAX_EXTRACTED_TEXT_LENGTH
+      });
+
+      return text.slice(0, MAX_EXTRACTED_TEXT_LENGTH);
+    }
+  }
+
+  /**
+   * Attempts to extract text from image-based PDFs using OCR
+   * when standard text extraction fails or produces low-quality output
+   */
+  private async extractFromPdfUsingOcr(
+    buffer: Buffer,
+    assignment: AssignmentDocument
+  ): Promise<string> {
+    fileProcessingLogger.info("Standard PDF parsing failed or low quality, attempting OCR fallback", {
+      assignmentId: assignment._id.toString()
+    });
+
+    try {
+      const ocrExtractedText = await extractTextFromPdfImages(
+        buffer,
+        assignment._id.toString()
+      );
+
+      const cleanedOcrText = cleanExtractedText(ocrExtractedText);
+
+      fileProcessingLogger.info("OCR extraction succeeded", {
+        assignmentId: assignment._id.toString(),
+        extractedLength: cleanedOcrText.length
+      });
+
+      return cleanedOcrText;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "OCR extraction failed: unknown error";
+
+      fileProcessingLogger.error("OCR extraction failed", {
+        assignmentId: assignment._id.toString(),
+        error: errorMsg
+      });
+
+      throw new Error(`OCR fallback failed: ${errorMsg}`);
+    }
+  }
   async processJob(payload: FileProcessingJobData): Promise<void> {
     const assignment = await AssignmentModel.findById(payload.assignmentId);
 
@@ -141,29 +255,99 @@ export class FileProcessor {
         detectedFileType
       });
 
-      const rawExtractedText = await extractTextByFileType(
+      let rawExtractedText = await extractTextByFileType(
         downloadedFile.buffer,
         detectedFileType
       );
 
-      const cleanedExtractedText = cleanExtractedText(rawExtractedText);
+      let cleanedExtractedText = cleanExtractedText(rawExtractedText);
+      let textProcessingPath = "standard"; // Track which path we took
 
-      // 🔥 VALIDATIONS
+      // 🔥 VALIDATION: Check for empty or low-quality extraction
+      let isQualityIssue = false;
+
       if (!cleanedExtractedText) {
-        throw new Error("Empty extraction: no readable text found in file");
+        fileProcessingLogger.warn("Empty extraction detected", {
+          assignmentId: payload.assignmentId,
+          detectedFileType
+        });
+        isQualityIssue = true;
+      } else if (cleanedExtractedText.length < MIN_EXTRACTED_TEXT_LENGTH) {
+        fileProcessingLogger.warn("Extraction too small", {
+          assignmentId: payload.assignmentId,
+          extractedLength: cleanedExtractedText.length,
+          minimumRequired: MIN_EXTRACTED_TEXT_LENGTH,
+          detectedFileType
+        });
+        isQualityIssue = true;
+      } else {
+        const nonAlphanumericRatio = getNonAlphanumericRatio(cleanedExtractedText);
+        if (nonAlphanumericRatio > MAX_NON_ALPHANUMERIC_RATIO) {
+          fileProcessingLogger.warn("Low quality extraction (high non-alphanumeric ratio)", {
+            assignmentId: payload.assignmentId,
+            ratio: nonAlphanumericRatio,
+            maximum: MAX_NON_ALPHANUMERIC_RATIO,
+            detectedFileType
+          });
+          isQualityIssue = true;
+        }
       }
 
-      if (cleanedExtractedText.length < MIN_EXTRACTED_TEXT_LENGTH) {
-        throw new Error("Too small extraction: extracted text is below minimum length");
+      // 🔥 FALLBACK 1: OCR for PDFs with quality issues
+      if (isQualityIssue && detectedFileType === "pdf") {
+        try {
+          cleanedExtractedText = await this.extractFromPdfUsingOcr(
+            downloadedFile.buffer,
+            assignment
+          );
+          textProcessingPath = "ocr-fallback";
+
+          // Re-validate after OCR
+          if (!cleanedExtractedText || cleanedExtractedText.length < MIN_EXTRACTED_TEXT_LENGTH) {
+            throw new Error("OCR fallback produced insufficient text");
+          }
+
+          const ocrNonAlphanumericRatio = getNonAlphanumericRatio(cleanedExtractedText);
+          if (ocrNonAlphanumericRatio > MAX_NON_ALPHANUMERIC_RATIO) {
+            throw new Error("OCR fallback produced low-quality text");
+          }
+        } catch (ocrError) {
+          const errorMessage =
+            ocrError instanceof Error ? ocrError.message : "OCR extraction failed";
+          throw new Error(`${errorMessage}`);
+        }
+      } else if (isQualityIssue) {
+        // Non-PDF files don't have OCR fallback
+        if (!cleanedExtractedText) {
+          throw new Error("Empty extraction: no readable text found in file");
+        } else if (cleanedExtractedText.length < MIN_EXTRACTED_TEXT_LENGTH) {
+          throw new Error("Too small extraction: extracted text is below minimum length");
+        } else {
+          throw new Error("Parsing failure: extracted text quality is too low");
+        }
       }
 
-      const nonAlphanumericRatio = getNonAlphanumericRatio(cleanedExtractedText);
+      // 🔥 FALLBACK 2: LLM Summarization for oversized text
+      if (cleanedExtractedText.length > MAX_EXTRACTED_TEXT_LENGTH) {
+        const originalLength = cleanedExtractedText.length;
+        cleanedExtractedText = await this.summarizeOversizedText(
+          cleanedExtractedText,
+          assignment
+        );
+        textProcessingPath =
+          textProcessingPath === "ocr-fallback"
+            ? "ocr-then-summarize"
+            : "summarize-fallback";
 
-      if (nonAlphanumericRatio > MAX_NON_ALPHANUMERIC_RATIO) {
-        throw new Error("Parsing failure: extracted text quality is too low");
+        fileProcessingLogger.info("LLM summarization applied", {
+          assignmentId: payload.assignmentId,
+          originalLength,
+          summarizedLength: cleanedExtractedText.length,
+          processingPath: textProcessingPath
+        });
       }
 
-      // ✅ STORE ONLY RAW CLEAN TEXT
+      // ✅ STORE PROCESSED TEXT
       assignment.sourceMaterial.file.status = "processed";
       assignment.sourceMaterial.file.extractedText = cleanedExtractedText.slice(
         0,
@@ -177,7 +361,8 @@ export class FileProcessor {
         assignmentId: payload.assignmentId,
         fileUrl: payload.fileUrl,
         detectedFileType,
-        extractedLength: assignment.sourceMaterial.file.extractedText.length
+        extractedLength: assignment.sourceMaterial.file.extractedText.length,
+        processingPath: textProcessingPath
       });
     } catch (error) {
       const errorMessage =
