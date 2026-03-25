@@ -59,17 +59,65 @@ const AssignmentSectionSchema = new Schema(
   }
 );
 
-const AssignmentSourceMaterialSchema = new Schema(
+const AssignmentTextSourceMaterialSchema = new Schema(
   {
-    type: {
-      type: String,
-      enum: ["file", "text"],
-      required: true
-    },
     content: {
       type: String,
       required: true,
       trim: true
+    }
+  },
+  {
+    _id: false
+  }
+);
+
+const AssignmentFileSourceMaterialSchema = new Schema(
+  {
+    fileUrl: {
+      type: String,
+      trim: true,
+      required: true
+    },
+    extractedText: {
+      type: String,
+      trim: true,
+      required: false
+    },
+    status: {
+      type: String,
+      enum: ["pending", "processed", "failed"],
+      required: true
+    },
+    error: {
+      type: String,
+      trim: true,
+      required: false
+    },
+    documentType: {
+      type: String,
+      enum: ["syllabus", "notes", "textbook", "questions", "mixed", "unknown"],
+      required: false
+    },
+    parsedData: {
+      type: Schema.Types.Mixed,
+      required: false
+    }
+  },
+  {
+    _id: false
+  }
+);
+
+const AssignmentSourceMaterialSchema = new Schema(
+  {
+    text: {
+      type: AssignmentTextSourceMaterialSchema,
+      required: false
+    },
+    file: {
+      type: AssignmentFileSourceMaterialSchema,
+      required: false
     }
   },
   {

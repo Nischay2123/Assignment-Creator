@@ -21,7 +21,11 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM_NAME: z.string().min(1).default("Assignment Creator"),
-  SMTP_FROM_EMAIL: z.string().email().default("no-reply@assignment-creator.local")
+  SMTP_FROM_EMAIL: z.string().email().default("no-reply@assignment-creator.local"),
+  AWS_REGION: z.string().min(1).default("us-east-1"),
+  AWS_S3_BUCKET: z.string().min(1),
+  AWS_ACCESS_KEY_ID: z.string().min(1),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1)
 });
 
 export const env = envSchema.parse(process.env);

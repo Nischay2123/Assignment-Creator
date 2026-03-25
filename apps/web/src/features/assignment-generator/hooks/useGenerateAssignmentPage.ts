@@ -73,6 +73,7 @@ export const useGenerateAssignmentPage = () => {
     dueDate: "",
     assignmentInstruction: "Attempt all questions.",
     additionalInfo: "",
+    sourceFile: null,
     sourceFileName: "",
     sections: [createGeneratorSection("MCQ"), createGeneratorSection("SHORT")],
   })
@@ -114,14 +115,11 @@ export const useGenerateAssignmentPage = () => {
       title: editingAssignment.title,
       dueDate: toDateInputValue(editingAssignment.dueDate),
       assignmentInstruction: editingAssignment.instructions,
-      sourceFileName:
-        editingAssignment.sourceMaterial?.type === "file"
-          ? editingAssignment.sourceMaterial.content
-          : "",
-      additionalInfo:
-        editingAssignment.sourceMaterial?.type === "text"
-          ? editingAssignment.sourceMaterial.content
-          : "",
+      sourceFile: null, // File objects can't be recreated from API response
+      sourceFileName: editingAssignment.sourceMaterial?.file?.fileUrl
+        ? editingAssignment.sourceMaterial.file.fileUrl.split("/").pop() || ""
+        : "",
+      additionalInfo: editingAssignment.sourceMaterial?.text?.content || "",
       sections: toSectionFormItems(
         editingAssignment.sections.map((section, index) => ({
           id: `${section.sectionId}-${index + 1}`,
@@ -204,7 +202,12 @@ export const useGenerateAssignmentPage = () => {
   }
 
   const handleFileSelect = (file?: File) => {
-    updateField("sourceFileName", file?.name ?? "")
+    setForm((current) => ({
+      ...current,
+      sourceFile: file || null,
+      sourceFileName: file?.name ?? "",
+    }))
+    setSubmitError("")
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -218,6 +221,13 @@ export const useGenerateAssignmentPage = () => {
     }
 
     try {
+      // Build source material with both text and file
+      const sourceMaterial: any = {}
+      if (form.additionalInfo.trim()) {
+        sourceMaterial.text = { content: form.additionalInfo.trim() }
+      }
+      // Note: file will be sent separately as multipart form data
+
       const assignmentId = editingAssignment
         ? editingAssignment.id
         : (
@@ -236,24 +246,23 @@ export const useGenerateAssignmentPage = () => {
                   difficulty: section.difficulty,
                 },
               })),
-              sourceMaterial: form.sourceFileName
-                ? { type: "file", content: form.sourceFileName }
-                : form.additionalInfo.trim()
-                  ? { type: "text", content: form.additionalInfo.trim() }
-                  : undefined,
+              sourceMaterial: Object.keys(sourceMaterial).length > 0 ? sourceMaterial : undefined,
+              file: form.sourceFile ?? undefined,
             }).unwrap()
           ).id
 
       // If in edit mode, update the assignment with new additional info/file
       if (isEditMode && editingAssignment) {
+        const updateSourceMaterial: any = {}
+        if (form.additionalInfo.trim()) {
+          updateSourceMaterial.text = { content: form.additionalInfo.trim() }
+        }
+
         await updateAssignment({
           id: assignmentId,
           payload: {
-            sourceMaterial: form.sourceFileName
-              ? { type: "file", content: form.sourceFileName }
-              : form.additionalInfo.trim()
-                ? { type: "text", content: form.additionalInfo.trim() }
-                : undefined,
+            sourceMaterial: Object.keys(updateSourceMaterial).length > 0 ? updateSourceMaterial : undefined,
+            file: form.sourceFile ?? undefined,
           },
         }).unwrap()
       }

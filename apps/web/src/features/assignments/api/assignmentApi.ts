@@ -17,15 +17,41 @@ export type CreateAssignmentPayload = {
   dueDate: string
   sections: AssignmentSectionInput[]
   sourceMaterial?: SourceMaterialInput
+  file?: File
 }
 
 export type UpdateAssignmentPayload = {
   instructions?: string
   sourceMaterial?: SourceMaterialInput
+  file?: File
 }
 
 export type CreateGenerationPayload = {
   assignmentId: string
+}
+
+const buildFormData = (data: Record<string, any>, file?: File): FormData | Record<string, any> => {
+  if (!file) {
+    return data
+  }
+
+  const formData = new FormData()
+  
+  // Add non-file fields
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== "file" && value !== undefined) {
+      if (typeof value === "object") {
+        formData.append(key, JSON.stringify(value))
+      } else {
+        formData.append(key, String(value))
+      }
+    }
+  })
+  
+  // Add file
+  formData.append("file", file)
+  
+  return formData
 }
 
 export const assignmentApi = baseApi.injectEndpoints({
@@ -41,20 +67,28 @@ export const assignmentApi = baseApi.injectEndpoints({
       transformResponse: (response: ApiResponse<GenerationRecord[]>) => response.data,
     }),
     createAssignment: builder.mutation<AssignmentRecord, CreateAssignmentPayload>({
-      query: (payload) => ({
-        url: "assignments",
-        method: "POST",
-        body: payload,
-      }),
+      query: (payload) => {
+        const { file, ...rest } = payload
+        const body = buildFormData(rest, file)
+        return {
+          url: "assignments",
+          method: "POST",
+          body,
+        }
+      },
       invalidatesTags: ["Assignments"],
       transformResponse: (response: ApiResponse<AssignmentRecord>) => response.data,
     }),
     updateAssignment: builder.mutation<AssignmentRecord, { id: string; payload: UpdateAssignmentPayload }>({
-      query: ({ id, payload }) => ({
-        url: `assignments/${id}`,
-        method: "PUT",
-        body: payload,
-      }),
+      query: ({ id, payload }) => {
+        const { file, ...rest } = payload
+        const body = buildFormData(rest, file)
+        return {
+          url: `assignments/${id}`,
+          method: "PUT",
+          body,
+        }
+      },
       invalidatesTags: ["Assignments"],
       transformResponse: (response: ApiResponse<AssignmentRecord>) => response.data,
     }),

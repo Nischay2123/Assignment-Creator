@@ -16,9 +16,30 @@ const sectionSchema = z.object({
   questionConfig: questionConfigSchema
 });
 
-const sourceMaterialSchema = z.object({
-  type: z.enum(["file", "text"]),
+const textSourceMaterialSchema = z.object({
   content: z.string().trim().min(1, "Source material content is required")
+});
+
+const fileSourceMaterialSchema = z.object({
+  fileUrl: z.string().trim().url("Source file URL must be a valid URL"),
+  extractedText: z.string().trim().optional(),
+  status: z.enum(["pending", "processed", "failed"]),
+  error: z.string().trim().optional()
+});
+
+// Client input schema: allows optional text and/or file
+const sourceMaterialInputSchema = z.object({
+  text: textSourceMaterialSchema.optional(),
+  file: fileSourceMaterialSchema.optional()
+}).refine(
+  (data) => data.text !== undefined || data.file !== undefined,
+  { message: "At least one of text or file source material is required" }
+);
+
+// Full schema for database operations (both text and file can exist)
+const sourceMaterialSchema = z.object({
+  text: textSourceMaterialSchema.optional(),
+  file: fileSourceMaterialSchema.optional()
 });
 
 export const assignmentParamsSchema = z.object({
@@ -30,12 +51,12 @@ export const createAssignmentSchema = z.object({
   instructions: z.string().trim().min(1, "Instructions are required"),
   dueDate: z.coerce.date(),
   sections: z.array(sectionSchema).min(1, "At least one section is required"),
-  sourceMaterial: sourceMaterialSchema.optional()
+  sourceMaterial: sourceMaterialInputSchema.optional()
 });
 
 export const updateAssignmentSchema = z.object({
   instructions: z.string().trim().min(1, "Instructions are required").optional(),
-  sourceMaterial: sourceMaterialSchema.optional()
+  sourceMaterial: sourceMaterialInputSchema.optional()
 });
 
 export type CreateAssignmentPayload = z.infer<typeof createAssignmentSchema>;

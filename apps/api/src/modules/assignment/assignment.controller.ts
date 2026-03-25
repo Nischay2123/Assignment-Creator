@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { HttpError } from "../../common/errors/http-error.js";
 import type { ApiSuccessResponse } from "../../common/types/user.types.js";
 import type {
   AssignmentResponse,
@@ -15,13 +16,62 @@ import {
 
 const assignmentService = new AssignmentService();
 
+const parseJsonIfString = (value: unknown): unknown => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return value;
+  }
+
+  if (
+    (trimmedValue.startsWith("{") && trimmedValue.endsWith("}")) ||
+    (trimmedValue.startsWith("[") && trimmedValue.endsWith("]"))
+  ) {
+    try {
+      return JSON.parse(trimmedValue);
+    } catch {
+      throw new HttpError(400, "Invalid JSON payload in multipart request");
+    }
+  }
+
+  return value;
+};
+
+const normalizeAssignmentBody = (body: Request["body"]): Record<string, unknown> => {
+  const normalizedBody: Record<string, unknown> = { ...body };
+
+  if (Object.prototype.hasOwnProperty.call(normalizedBody, "sections")) {
+    normalizedBody.sections = parseJsonIfString(normalizedBody.sections);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(normalizedBody, "sourceMaterial")) {
+    normalizedBody.sourceMaterial = parseJsonIfString(normalizedBody.sourceMaterial);
+  }
+
+  return normalizedBody;
+};
+
 export class AssignmentController {
   async create(
     req: Request,
     res: Response<ApiSuccessResponse<AssignmentResponse>>
   ) {
-    const payload: CreateAssignmentInput = createAssignmentSchema.parse(req.body);
-    const result = await assignmentService.createAssignment(payload);
+    const normalizedBody = normalizeAssignmentBody(req.body);
+    const payload: CreateAssignmentInput = createAssignmentSchema.parse(normalizedBody);
+
+    if (req.file && !payload.sourceMaterial?.text) {
+      // File upload without text source material is allowed
+      // Just ensure sourceMaterial is initialized
+      if (!payload.sourceMaterial) {
+        payload.sourceMaterial = {};
+      }
+    }
+
+    const result = await assignmentService.createAssignment(payload, req.file);
 
     return res.status(201).json({ data: result });
   }
@@ -50,8 +100,18 @@ export class AssignmentController {
     res: Response<ApiSuccessResponse<AssignmentResponse>>
   ) {
     const { id } = assignmentParamsSchema.parse(req.params);
-    const payload: UpdateAssignmentInput = updateAssignmentSchema.parse(req.body);
-    const result = await assignmentService.updateAssignment(id, payload);
+    const normalizedBody = normalizeAssignmentBody(req.body);
+    const payload: UpdateAssignmentInput = updateAssignmentSchema.parse(normalizedBody);
+
+    if (req.file && !payload.sourceMaterial?.text) {
+      // File upload without text source material is allowed
+      // Just ensure sourceMaterial is initialized
+      if (!payload.sourceMaterial) {
+        payload.sourceMaterial = {};
+      }
+    }
+
+    const result = await assignmentService.updateAssignment(id, payload, req.file);
 
     return res.status(200).json({ data: result });
   }

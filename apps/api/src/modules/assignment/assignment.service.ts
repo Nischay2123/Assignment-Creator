@@ -1,11 +1,20 @@
+import { logger } from "@repo/logger";
+
 import { HttpError } from "../../common/errors/http-error.js";
 import type {
+  AssignmentFileSourceMaterial,
+  AssignmentSourceMaterial,
   AssignmentDocument,
   AssignmentResponse,
   CreateAssignmentInput,
   UpdateAssignmentInput
 } from "../../common/types/assignment.types.js";
 import { AssignmentModel } from "./assignment.model.js";
+import { FILE_PROCESSING_QUEUE_NAME } from "./file.constants.js";
+import { addFileProcessingJob } from "./file.queue.js";
+import { uploadAssignmentSourceFile } from "./file.service.js";
+
+const assignmentLogger = logger.child({ module: "assignment-service" });
 
 const toAssignmentResponse = (
   assignment: AssignmentDocument
@@ -23,8 +32,64 @@ const toAssignmentResponse = (
 };
 
 export class AssignmentService {
-  async createAssignment(payload: CreateAssignmentInput): Promise<AssignmentResponse> {
-    const assignment = await AssignmentModel.create(payload);
+  private async enqueueFileProcessing(
+    assignmentId: string,
+    fileUrl: string
+  ): Promise<void> {
+    const job = await addFileProcessingJob({
+      assignmentId,
+      fileUrl
+    });
+
+    assignmentLogger.info("File processing job queued", {
+      assignmentId,
+      fileUrl,
+      queueName: FILE_PROCESSING_QUEUE_NAME,
+      jobId: job.id?.toString()
+    });
+  }
+
+  async createAssignment(
+    payload: CreateAssignmentInput,
+    file?: Express.Multer.File
+  ): Promise<AssignmentResponse> {
+    const sourceMaterial: AssignmentSourceMaterial | undefined = {};
+
+    // Add text source material if provided
+    if (payload.sourceMaterial?.text) {
+      sourceMaterial.text = payload.sourceMaterial.text;
+    }
+
+    const assignment = new AssignmentModel({
+      title: payload.title,
+      instructions: payload.instructions,
+      dueDate: payload.dueDate,
+      sections: payload.sections,
+      sourceMaterial: Object.keys(sourceMaterial).length > 0 ? sourceMaterial : undefined
+    });
+
+    const assignmentId = assignment._id.toString();
+
+    // Handle file upload - add to existing sourceMaterial or create new
+    if (file) {
+      const uploadedFile = await uploadAssignmentSourceFile(assignmentId, file);
+      const fileSourceMaterial: AssignmentFileSourceMaterial = {
+        fileUrl: uploadedFile.fileUrl,
+        status: "pending"
+      };
+
+      if (!assignment.sourceMaterial) {
+        assignment.sourceMaterial = {};
+      }
+
+      assignment.sourceMaterial.file = fileSourceMaterial;
+    }
+
+    await assignment.save();
+
+    if (file && assignment.sourceMaterial?.file) {
+      await this.enqueueFileProcessing(assignmentId, assignment.sourceMaterial.file.fileUrl);
+    }
 
     return toAssignmentResponse(assignment);
   }
@@ -45,11 +110,49 @@ export class AssignmentService {
     return toAssignmentResponse(assignment);
   }
 
-  async updateAssignment(id: string, payload: UpdateAssignmentInput): Promise<AssignmentResponse> {
-    const assignment = await AssignmentModel.findByIdAndUpdate(id, payload, { new: true });
+  async updateAssignment(
+    id: string,
+    payload: UpdateAssignmentInput,
+    file?: Express.Multer.File
+  ): Promise<AssignmentResponse> {
+    const assignment = await AssignmentModel.findById(id);
 
     if (!assignment) {
       throw new HttpError(404, "Assignment not found");
+    }
+
+    if (payload.instructions !== undefined) {
+      assignment.instructions = payload.instructions;
+    }
+
+    // Update text source material if provided
+    if (payload.sourceMaterial?.text) {
+      if (!assignment.sourceMaterial) {
+        assignment.sourceMaterial = {};
+      }
+      assignment.sourceMaterial.text = payload.sourceMaterial.text;
+    }
+
+    // Handle file upload - add to or update sourceMaterial
+    if (file) {
+      const uploadedFile = await uploadAssignmentSourceFile(id, file);
+
+      if (!assignment.sourceMaterial) {
+        assignment.sourceMaterial = {};
+      }
+
+      assignment.sourceMaterial.file = {
+        fileUrl: uploadedFile.fileUrl,
+        status: "pending",
+        extractedText: undefined,
+        error: undefined
+      };
+    }
+
+    await assignment.save();
+
+    if (file && assignment.sourceMaterial?.file) {
+      await this.enqueueFileProcessing(id, assignment.sourceMaterial.file.fileUrl);
     }
 
     return toAssignmentResponse(assignment);

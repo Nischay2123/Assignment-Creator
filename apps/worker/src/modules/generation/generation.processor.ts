@@ -45,6 +45,46 @@ const toGenerationResponse = (
 };
 
 const buildPrompt = (assignment: AssignmentDocument): string => {
+  const promptSourceMaterial = (() => {
+    if (!assignment.sourceMaterial) {
+      return null;
+    }
+
+    const sources: Array<{
+      type: string;
+      content: string;
+      documentType?: string;
+      parsedData?: Record<string, any>;
+    }> = [];
+
+    // Add text source material if present
+    if (assignment.sourceMaterial.text?.content) {
+      sources.push({
+        type: "text",
+        content: assignment.sourceMaterial.text.content
+      });
+    }
+
+    // Add file source material if present and processed
+    if (
+      assignment.sourceMaterial.file?.status === "processed" &&
+      assignment.sourceMaterial.file.extractedText
+    ) {
+      sources.push({
+        type: "file",
+        content: assignment.sourceMaterial.file.extractedText,
+        documentType: assignment.sourceMaterial.file.documentType,
+        parsedData: assignment.sourceMaterial.file.parsedData
+      });
+    }
+
+    if (sources.length === 0) {
+      return null;
+    }
+
+    return sources.length === 1 ? sources[0] : sources;
+  })();
+
   const assignmentPayload = {
     title: assignment.title,
     instructions: assignment.instructions,
@@ -60,12 +100,7 @@ const buildPrompt = (assignment: AssignmentDocument): string => {
         difficulty: section.questionConfig.difficulty
       }
     })),
-    sourceMaterial: assignment.sourceMaterial
-      ? {
-          type: assignment.sourceMaterial.type,
-          content: assignment.sourceMaterial.content
-        }
-      : null
+    sourceMaterial: promptSourceMaterial
   };
 
   const outputSchema = {
@@ -102,6 +137,15 @@ const buildPrompt = (assignment: AssignmentDocument): string => {
     "8. For every question, marks must match the section questionConfig.marksPerQuestion.",
     "9. Include options only for MCQ questions, and provide exactly 4 options.",
     "10. Do not add extra sections, omit sections, or rename fields.",
+    "",
+    "SOURCE_MATERIAL_GUIDE",
+    "The sourceMaterial has been automatically classified. Use the provided information based on the documentType:",
+    "- If documentType is 'syllabus': Use courses, chapters, objectives from parsedData to structure questions",
+    "- If documentType is 'notes': Use key_concepts, formulas, definitions from parsedData as content sources",
+    "- If documentType is 'textbook': Use topics, definitions, key_concepts to create comprehensive questions",
+    "- If documentType is 'questions': Extract and rephrase existing questions from parsedData",
+    "- If documentType is 'mixed': Combine approaches - use all applicable structured data",
+    "- If documentType is 'unknown': Use raw content field as general reference material",
     "",
     "REQUIRED_OUTPUT_SCHEMA",
     JSON.stringify(outputSchema, null, 2),

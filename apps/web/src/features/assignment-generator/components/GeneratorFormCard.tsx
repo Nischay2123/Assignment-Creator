@@ -77,7 +77,7 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
 
         <section className="space-y-3">
           <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-foreground">Reference File</span>
+            <span className="text-sm font-medium text-foreground">Reference File (Optional)</span>
 
             <div className="rounded-2xl border border-dashed border-border/70 bg-background px-6 py-7 text-center transition hover:border-primary/40 hover:bg-muted/40">
               <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-muted/70 sm:size-14">
@@ -89,7 +89,7 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
               </p>
 
               <p className="mt-1 max-w-md mx-auto text-sm leading-6 text-muted-foreground">
-                Upload a file to guide the question paper generation/ Assignment creation. This can be:
+                Upload a file to guide the question paper generation. This can be:
               </p>
 
               <ul className="mt-2 max-w-md mx-auto text-sm leading-6 text-muted-foreground space-y-1">
@@ -129,7 +129,7 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
           totalQuestions={model.totals.totalQuestions}
         />
 
-        <Field label="Additional Information" error={model.errors.additionalInfo}>
+        <Field label="Additional Information" error={model.errors.additionalInfo} help="Provide instructions or context for question generation (optional)">
           <Textarea
             className="min-h-28 rounded-xl bg-background px-4 py-3 text-sm shadow-sm border border-border focus-visible:ring-2 focus-visible:ring-primary/30"
             onChange={(event) => model.updateField("additionalInfo", event.target.value)}
@@ -171,12 +171,14 @@ type FieldProps = {
   children: React.ReactNode
   error?: string
   label: string
+  help?: string
 }
 
-const Field = ({ children, error, label }: FieldProps) => {
+const Field = ({ children, error, label, help }: FieldProps) => {
   return (
     <label className="block space-y-1.5">
       <span className="text-sm font-medium text-foreground">{label}</span>
+      {help ? <span className="block text-xs text-muted-foreground">{help}</span> : null}
       {children}
       {error ? <span className="block text-xs text-destructive pl-1">{error}</span> : null}
     </label>

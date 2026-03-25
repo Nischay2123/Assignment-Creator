@@ -10,7 +10,11 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   GEMINI_API_KEY: z.string().min(1),
   GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash-lite"),
-  GEMINI_TIMEOUT_MS: z.coerce.number().int().positive().default(30000)
+  GEMINI_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
+  AWS_REGION: z.string().min(1).default("us-east-1"),
+  AWS_S3_BUCKET: z.string().min(1),
+  AWS_ACCESS_KEY_ID: z.string().min(1),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1)
 });
 
 export const env = envSchema.parse(process.env);

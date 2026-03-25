@@ -18,9 +18,20 @@ export type AssignmentSectionInput = {
   questionConfig: AssignmentQuestionConfig
 }
 
-export type SourceMaterialInput = {
-  type: "file" | "text"
+export type SourceMaterialTextInput = {
   content: string
+}
+
+export type SourceMaterialFileInput = {
+  fileUrl: string
+  extractedText?: string
+  status: "pending" | "processed" | "failed"
+  error?: string
+}
+
+export type SourceMaterialInput = {
+  text?: SourceMaterialTextInput
+  file?: SourceMaterialFileInput
 }
 
 export type AssignmentRecord = {

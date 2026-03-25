@@ -23,6 +23,7 @@ export type GeneratorFormState = {
   dueDate: string
   assignmentInstruction: string
   additionalInfo: string
+  sourceFile: File | null
   sourceFileName: string
   sections: GeneratorSectionFormItem[]
 }
