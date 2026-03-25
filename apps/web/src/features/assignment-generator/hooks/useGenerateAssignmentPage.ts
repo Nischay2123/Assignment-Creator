@@ -9,6 +9,7 @@ import {
   useGetGenerationsQuery,
 } from "@/features/assignments/api/assignmentApi"
 import { createGeneratorSection } from "@/features/assignment-generator/lib/generator-config"
+import { validateFile } from "@/features/assignment-generator/lib/file-validation"
 import {
   countGenerationsForAssignment,
   trackPendingGeneration,
@@ -79,6 +80,8 @@ export const useGenerateAssignmentPage = () => {
   })
   const [submitError, setSubmitError] = useState("")
   const [submitSuccess, setSubmitSuccess] = useState("")
+  const [fileValidationError, setFileValidationError] = useState("")
+  const [isValidatingFile, setIsValidatingFile] = useState(false)
 
   const [createAssignment, createAssignmentState] = useCreateAssignmentMutation()
   const [updateAssignment, updateAssignmentState] = useUpdateAssignmentMutation()
@@ -201,13 +204,45 @@ export const useGenerateAssignmentPage = () => {
     }))
   }
 
-  const handleFileSelect = (file?: File) => {
-    setForm((current) => ({
-      ...current,
-      sourceFile: file || null,
-      sourceFileName: file?.name ?? "",
-    }))
-    setSubmitError("")
+  const handleFileSelect = async (file?: File) => {
+    setFileValidationError("")
+
+    if (!file) {
+      setForm((current) => ({
+        ...current,
+        sourceFile: null,
+        sourceFileName: "",
+      }))
+      return
+    }
+
+    // Start validation
+    setIsValidatingFile(true)
+
+    try {
+      // Validate file
+      const validation = await validateFile(file)
+
+      if (!validation.valid) {
+        setFileValidationError(validation.error || "Invalid file")
+        setForm((current) => ({
+          ...current,
+          sourceFile: null,
+          sourceFileName: "",
+        }))
+        return
+      }
+
+      // File is valid, store it
+      setForm((current) => ({
+        ...current,
+        sourceFile: file,
+        sourceFileName: file.name,
+      }))
+      setSubmitError("")
+    } finally {
+      setIsValidatingFile(false)
+    }
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -293,10 +328,12 @@ export const useGenerateAssignmentPage = () => {
 
   return {
     errors,
+    fileValidationError,
     form,
     isEditMode,
     isHydratingForm,
     isSubmitting,
+    isValidatingFile,
     submitError,
     submitSuccess,
     totals,

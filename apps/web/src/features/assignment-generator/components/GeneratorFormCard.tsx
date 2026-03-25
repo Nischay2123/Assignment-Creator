@@ -1,4 +1,4 @@
-import { CalendarDaysIcon, UploadCloudIcon } from "lucide-react"
+import { CalendarDaysIcon, UploadCloudIcon, Loader2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -79,7 +79,7 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
           <label className="block space-y-1.5">
             <span className="text-sm font-medium text-foreground">Reference File (Optional)</span>
 
-            <div className="rounded-2xl border border-dashed border-border/70 bg-background px-6 py-7 text-center transition hover:border-primary/40 hover:bg-muted/40">
+            <div className={`rounded-2xl border border-dashed border-border/70 bg-background px-6 py-7 text-center transition ${model.isValidatingFile ? "opacity-60 bg-muted/20" : "hover:border-primary/40 hover:bg-muted/40"}`}>
               <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-muted/70 sm:size-14">
                 <UploadCloudIcon className="size-5 text-foreground sm:size-6" />
               </div>
@@ -102,18 +102,34 @@ export const GeneratorFormCard = ({ model }: GeneratorFormCardProps) => {
                 You can drag and drop your file here or click <strong>Browse Files</strong> to upload.
               </p>
 
-              <label className="mt-4 inline-flex cursor-pointer items-center rounded-xl bg-muted px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted/80 sm:mt-5">
-                Browse Files
+              <label className={`mt-4 sm:mt-5 inline-flex cursor-pointer items-center rounded-xl bg-muted px-5 py-2.5 text-sm font-medium text-foreground transition ${model.isValidatingFile ? "opacity-60 cursor-not-allowed hover:bg-muted" : "hover:bg-muted/80"}`}>
+                {model.isValidatingFile ? (
+                  <>
+                    <Loader2Icon className="mr-2 size-4 animate-spin" />
+                    Validating...
+                  </>
+                ) : (
+                  "Browse Files"
+                )}
                 <input
                   className="hidden"
+                  disabled={model.isValidatingFile}
                   onChange={(event) => model.handleFileSelect(event.target.files?.[0])}
                   type="file"
                 />
               </label>
 
               <p className="mt-3 text-sm text-muted-foreground">
-                {model.form.sourceFileName || "No file selected"}
+                {model.isValidatingFile 
+                  ? "Validating file..." 
+                  : model.form.sourceFileName || "No file selected"}
               </p>
+
+              {model.fileValidationError && !model.isValidatingFile && (
+                <p className="mt-2 text-sm text-red-500 font-medium">
+                  ❌ {model.fileValidationError}
+                </p>
+              )}
             </div>
           </label>
         </section>
