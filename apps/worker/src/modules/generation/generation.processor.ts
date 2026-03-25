@@ -53,8 +53,6 @@ const buildPrompt = (assignment: AssignmentDocument): string => {
     const sources: Array<{
       type: string;
       content: string;
-      documentType?: string;
-      parsedData?: Record<string, any>;
     }> = [];
 
     // Add text source material if present
@@ -65,16 +63,16 @@ const buildPrompt = (assignment: AssignmentDocument): string => {
       });
     }
 
-    // Add file source material if present and processed
-    if (
-      assignment.sourceMaterial.file?.status === "processed" &&
-      assignment.sourceMaterial.file.extractedText
-    ) {
+    // Add file source material if extracted text is available
+    // File is guaranteed to be processed or failed by this point
+    if (assignment.sourceMaterial.file?.extractedText) {
       sources.push({
         type: "file",
-        content: assignment.sourceMaterial.file.extractedText,
-        documentType: assignment.sourceMaterial.file.documentType,
-        parsedData: assignment.sourceMaterial.file.parsedData
+        content: assignment.sourceMaterial.file.extractedText
+      });
+    } else if (assignment.sourceMaterial.file?.status === "failed") {
+      generationLogger.warn("File extraction failed for assignment, proceeding without file data", {
+        error: assignment.sourceMaterial.file.error
       });
     }
 
@@ -122,40 +120,64 @@ const buildPrompt = (assignment: AssignmentDocument): string => {
     ]
   };
 
-  return [
-    "ROLE",
-    "You are an AI exam generator that creates complete exam paper content from structured assignment inputs.",
-    "",
-    "STRICT_RULES",
-    "1. Return only valid JSON.",
-    "2. Do not include markdown, code fences, commentary, notes, or any extra text.",
-    "3. The root object must exactly match the required schema.",
-    "4. Preserve every input sectionId exactly as provided.",
-    "5. Produce exactly the requested number of questions for each section.",
-    "6. For every question, type must match the section questionConfig.type.",
-    "7. For every question, difficulty must match the section questionConfig.difficulty.",
-    "8. For every question, marks must match the section questionConfig.marksPerQuestion.",
-    "9. Include options only for MCQ questions, and provide exactly 4 options.",
-    "10. Do not add extra sections, omit sections, or rename fields.",
-    "",
-    "SOURCE_MATERIAL_GUIDE",
-    "The sourceMaterial has been automatically classified. Use the provided information based on the documentType:",
-    "- If documentType is 'syllabus': Use courses, chapters, objectives from parsedData to structure questions",
-    "- If documentType is 'notes': Use key_concepts, formulas, definitions from parsedData as content sources",
-    "- If documentType is 'textbook': Use topics, definitions, key_concepts to create comprehensive questions",
-    "- If documentType is 'questions': Extract and rephrase existing questions from parsedData",
-    "- If documentType is 'mixed': Combine approaches - use all applicable structured data",
-    "- If documentType is 'unknown': Use raw content field as general reference material",
-    "",
-    "REQUIRED_OUTPUT_SCHEMA",
-    JSON.stringify(outputSchema, null, 2),
-    "",
-    "ASSIGNMENT_INPUT",
-    JSON.stringify(assignmentPayload, null, 2),
-    "",
-    "FINAL_INSTRUCTION",
-    "Generate the exam paper now and return only the JSON object."
-  ].join("\n");
+return [
+  "ROLE",
+  "You are an AI exam generator that creates complete exam paper content from structured assignment inputs.",
+  "",
+  "STRICT_RULES",
+  "1. Return only valid JSON.",
+  "2. Do not include markdown, code fences, commentary, notes, or any extra text.",
+  "3. The root object must exactly match the required schema.",
+  "4. Preserve every input sectionId exactly as provided.",
+  "5. Produce exactly the requested number of questions for each section.",
+  "6. For every question, type must match the section questionConfig.type.",
+  "7. For every question, difficulty must match the section questionConfig.difficulty.",
+  "8. For every question, marks must match the section questionConfig.marksPerQuestion.",
+  "9. Include options only for MCQ questions, and provide exactly 4 options.",
+  "10. Do not add extra sections, omit sections, or rename fields.",
+  "",
+  "SOURCE_MATERIAL_RULES",
+  "The sourceMaterial may contain ANY type of academic content, including:",
+  "- syllabus (topics, chapters, objectives)",
+  "- notes (concepts, summaries, formulas)",
+  "- textbook content (detailed explanations)",
+  "- question banks",
+  "- or a mixture of all of the above",
+  "",
+  "You MUST:",
+  "1. Carefully read and understand the content before generating questions.",
+  "2. Identify key topics, concepts, definitions, and patterns from the material.",
+  "3. Generate questions strictly based on the actual content provided.",
+  "",
+  "CONTENT_ADAPTATION_GUIDELINES",
+  "- If content is syllabus-like → generate questions covering listed topics broadly.",
+  "- If content is conceptual/notes → focus on understanding, definitions, and applications.",
+  "- If content is detailed/theoretical → include deeper reasoning and long-form questions.",
+  "- If content includes existing questions → rephrase or adapt them, do not copy directly.",
+  "- If content is mixed → combine all strategies intelligently.",
+  "",
+  "CONTENT_GROUNDING_RULES",
+  "- Do NOT generate questions unrelated to the provided material.",
+  "- Do NOT hallucinate topics that are not present.",
+  "- Prefer concepts explicitly mentioned in the content.",
+  "",
+  "NOISE_HANDLING_RULES",
+  "- Ignore broken, irrelevant, or noisy text.",
+  "- Focus only on meaningful and understandable parts of the content.",
+  "",
+  "FAILSAFE_RULE",
+  "- If the content is unclear or insufficient, generate simple but relevant questions based on the closest identifiable topic.",
+  "- Do NOT leave any section empty.",
+  "",
+  "REQUIRED_OUTPUT_SCHEMA",
+  JSON.stringify(outputSchema, null, 2),
+  "",
+  "ASSIGNMENT_INPUT",
+  JSON.stringify(assignmentPayload, null, 2),
+  "",
+  "FINAL_INSTRUCTION",
+  "Generate the exam paper now and return only the JSON object."
+].join("\n");
 };
 
 const sleep = async (ms: number): Promise<void> => {
@@ -258,6 +280,11 @@ export class GenerationProcessor {
     const prompt = buildPrompt(assignment);
     const startedAt = Date.now();
 
+    generationLogger.info("Generation processing started", {
+      assignmentId: assignment._id.toString(),
+      generationId: generation._id.toString()
+    });
+
     generation.status = "processing";
     generation.prompt = prompt;
     generation.error = undefined;
@@ -288,6 +315,13 @@ export class GenerationProcessor {
         assignmentId: assignment._id.toString(),
         status: "completed",
         generation: response
+      });
+
+      generationLogger.info("Generation processing completed", {
+        assignmentId: assignment._id.toString(),
+        generationId: response.id,
+        processingTimeMs: generation.processingTimeMs,
+        rawResponseLength: generation.rawResponse?.length
       });
 
       return response;

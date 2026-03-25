@@ -3,7 +3,6 @@ import type { HydratedDocument } from "mongoose";
 export type AssignmentQuestionType = "MCQ" | "SHORT" | "LONG";
 export type AssignmentDifficulty = "easy" | "medium" | "hard";
 export type AssignmentSourceMaterialFileStatus = "pending" | "processed" | "failed";
-export type DocumentType = "syllabus" | "notes" | "textbook" | "questions" | "mixed" | "unknown";
 
 export interface AssignmentQuestionConfig {
   type: AssignmentQuestionType;
@@ -28,8 +27,6 @@ export interface AssignmentFileSourceMaterial {
   extractedText?: string;
   status: AssignmentSourceMaterialFileStatus;
   error?: string;
-  documentType?: DocumentType;
-  parsedData?: Record<string, any>;
 }
 
 export interface AssignmentSourceMaterial {

@@ -5,7 +5,7 @@ import { PDFParse } from "pdf-parse";
 
 import type { AssignmentDocument } from "../../common/types/assignment.types.js";
 import type { FileProcessingJobData } from "../../common/types/file-processing.types.js";
-import { extractTextFromPdfImages, estimatePdfHasImages } from "../../common/services/ocr.service.js";
+import { extractTextFromPdfImages } from "../../common/services/ocr.service.js";
 import {
   buildSummarizationPrompt,
   validateSummarizedText,
@@ -187,7 +187,7 @@ export class FileProcessor {
     buffer: Buffer,
     assignment: AssignmentDocument
   ): Promise<string> {
-    fileProcessingLogger.info("Standard PDF parsing failed or low quality, attempting OCR fallback", {
+    fileProcessingLogger.info("PDF extraction quality low, attempting OCR fallback", {
       assignmentId: assignment._id.toString()
     });
 
@@ -239,15 +239,17 @@ export class FileProcessor {
       return;
     }
 
-    fileProcessingLogger.info("File parsing started", {
+    fileProcessingLogger.info("File processing started", {
       assignmentId: payload.assignmentId,
       fileUrl: payload.fileUrl
     });
 
+    let detectedFileType: SupportedFileType | undefined;
+
     try {
       const downloadedFile = await downloadAssignmentSourceFile(payload.assignmentId);
 
-      const detectedFileType = await detectFileType(downloadedFile.buffer);
+      detectedFileType = await detectFileType(downloadedFile.buffer);
 
       fileProcessingLogger.info("Source file type detected", {
         assignmentId: payload.assignmentId,
@@ -357,7 +359,7 @@ export class FileProcessor {
 
       await assignment.save();
 
-      fileProcessingLogger.info("File parsing completed", {
+      fileProcessingLogger.info("File processing completed", {
         assignmentId: payload.assignmentId,
         fileUrl: payload.fileUrl,
         detectedFileType,
@@ -370,9 +372,10 @@ export class FileProcessor {
 
       await updateFailedSourceMaterial(assignment, errorMessage);
 
-      fileProcessingLogger.error("File parsing failed", {
+      fileProcessingLogger.error("File processing failed", {
         assignmentId: payload.assignmentId,
         fileUrl: payload.fileUrl,
+        detectedFileType,
         error: errorMessage
       });
 

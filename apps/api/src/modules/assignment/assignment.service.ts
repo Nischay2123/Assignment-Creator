@@ -36,6 +36,8 @@ export class AssignmentService {
     assignmentId: string,
     fileUrl: string
   ): Promise<void> {
+    const JOB_COMPLETION_TIMEOUT_MS = 70000; // 70s timeout (60s job + 10s buffer)
+    const POLL_INTERVAL_MS = 500; // Check job status every 500ms
     const job = await addFileProcessingJob({
       assignmentId,
       fileUrl
@@ -47,6 +49,60 @@ export class AssignmentService {
       queueName: FILE_PROCESSING_QUEUE_NAME,
       jobId: job.id?.toString()
     });
+
+    try {
+      // Poll for job completion with timeout
+      const startTime = Date.now();
+      let jobState = await job.getState();
+
+      while (jobState !== "completed" && jobState !== "failed") {
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime > JOB_COMPLETION_TIMEOUT_MS) {
+          throw new Error(`File processing timeout after ${JOB_COMPLETION_TIMEOUT_MS}ms`);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        jobState = await job.getState();
+      }
+
+      if (jobState === "failed") {
+        throw new Error(
+          `File processing job failed: ${job.failedReason || "Unknown error"}`
+        );
+      }
+
+      // Refresh assignment to get updated file data
+      const updatedAssignment = await AssignmentModel.findById(assignmentId);
+      if (updatedAssignment?.sourceMaterial?.file?.status === "failed") {
+        assignmentLogger.warn("File processing completed with failure status", {
+          assignmentId,
+          error: updatedAssignment.sourceMaterial.file.error
+        });
+      } else {
+        assignmentLogger.info("File processing completed successfully", {
+          assignmentId,
+          hasExtractedText: !!updatedAssignment?.sourceMaterial?.file?.extractedText
+        });
+      }
+    } catch (error) {
+      // Job timed out or failed
+      assignmentLogger.warn("File processing did not complete in time", {
+        assignmentId,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+
+      // Mark as failed in assignment
+      await AssignmentModel.findByIdAndUpdate(
+        assignmentId,
+        {
+          "sourceMaterial.file.status": "failed",
+          "sourceMaterial.file.error": "File processing timeout or worker unavailable"
+        },
+        { new: true }
+      );
+
+      throw error;
+    }
   }
 
   async createAssignment(

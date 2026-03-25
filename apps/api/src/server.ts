@@ -7,6 +7,8 @@ import { connectDatabase } from "./config/db.js";
 import { env } from "./config/env.js";
 import { startGenerationEventBridge } from "./modules/generation/generation.events.js";
 
+const apiServerLogger = logger.child({ module: "api-server" });
+
 const bootstrap = async () => {
   await connectDatabase();
 
@@ -16,7 +18,7 @@ const bootstrap = async () => {
   await startGenerationEventBridge(io);
 
   httpServer.listen(env.PORT, () => {
-    logger.info("API server listening", {
+    apiServerLogger.info("API server listening", {
       url: `http://localhost:${env.PORT}`,
       port: env.PORT
     });
@@ -24,7 +26,7 @@ const bootstrap = async () => {
 };
 
 bootstrap().catch((error: unknown) => {
-  logger.error("Failed to start API server", {
+  apiServerLogger.error("Failed to start API server", {
     error: error instanceof Error ? error.message : "Unknown error"
   });
   process.exit(1);

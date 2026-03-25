@@ -93,15 +93,6 @@ const AssignmentFileSourceMaterialSchema = new Schema(
       type: String,
       trim: true,
       required: false
-    },
-    documentType: {
-      type: String,
-      enum: ["syllabus", "notes", "textbook", "questions", "mixed", "unknown"],
-      required: false
-    },
-    parsedData: {
-      type: Schema.Types.Mixed,
-      required: false
     }
   },
   {

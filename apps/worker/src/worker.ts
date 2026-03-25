@@ -16,7 +16,7 @@ import {
 } from "./modules/generation/generation.constants.js";
 import { GenerationProcessor } from "./modules/generation/generation.processor.js";
 
-const workerLogger = logger.child({ module: "generation-worker" });
+const workerLogger = logger.child({ module: "worker-bootstrap" });
 const generationProcessor = new GenerationProcessor();
 const fileProcessor = new FileProcessor();
 
@@ -93,7 +93,7 @@ const bootstrap = async () => {
 };
 
 bootstrap().catch((error: unknown) => {
-  workerLogger.error("Failed to start generation worker", {
+  workerLogger.error("Failed to start worker services", {
     error: error instanceof Error ? error.message : "Unknown error"
   });
   process.exit(1);
