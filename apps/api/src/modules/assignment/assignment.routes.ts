@@ -27,3 +27,7 @@ assignmentRoutes.put(
   assignmentFileUpload.single("file"),
   asyncHandler((req, res) => assignmentController.update(req, res))
 );
+assignmentRoutes.delete(
+  "/:id",
+  asyncHandler((req, res) => assignmentController.delete(req, res))
+);

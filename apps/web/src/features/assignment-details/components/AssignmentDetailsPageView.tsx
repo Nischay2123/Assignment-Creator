@@ -62,9 +62,9 @@ export const AssignmentDetailsPageView = ({ model }: AssignmentDetailsPageViewPr
         <Button disabled={model.isGenerating} onClick={model.onGenerate} size="lg" variant="default">
           {model.isGenerating ? "Generating..." : "Generate"}
         </Button>
-        <Button onClick={model.onEdit} size="lg" variant="outline">
+        {/* <Button onClick={model.onEdit} size="lg" variant="outline">
           Edit
-        </Button>
+        </Button> */}
         <Button
           disabled={model.isRefetching}
           onClick={model.onRefetch}

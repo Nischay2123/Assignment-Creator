@@ -1,4 +1,4 @@
-import type { HydratedDocument } from "mongoose";
+import type { HydratedDocument, Types } from "mongoose";
 
 export type AssignmentQuestionType = "MCQ" | "SHORT" | "LONG";
 export type AssignmentDifficulty = "easy" | "medium" | "hard";
@@ -40,6 +40,7 @@ export interface Assignment {
   dueDate: Date;
   sections: AssignmentSection[];
   sourceMaterial?: AssignmentSourceMaterial;
+  userId: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
   isDeleted: boolean;

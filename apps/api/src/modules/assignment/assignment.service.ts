@@ -26,6 +26,7 @@ const toAssignmentResponse = (
     dueDate: assignment.dueDate,
     sections: assignment.sections,
     sourceMaterial: assignment.sourceMaterial,
+    userId: assignment.userId.toString(),
     createdAt: assignment.createdAt,
     updatedAt: assignment.updatedAt
   };
@@ -107,6 +108,7 @@ export class AssignmentService {
 
   async createAssignment(
     payload: CreateAssignmentInput,
+    userId: string,
     file?: Express.Multer.File
   ): Promise<AssignmentResponse> {
     const sourceMaterial: AssignmentSourceMaterial | undefined = {};
@@ -121,6 +123,7 @@ export class AssignmentService {
       instructions: payload.instructions,
       dueDate: payload.dueDate,
       sections: payload.sections,
+      userId,
       sourceMaterial: Object.keys(sourceMaterial).length > 0 ? sourceMaterial : undefined
     });
 
@@ -150,14 +153,14 @@ export class AssignmentService {
     return toAssignmentResponse(assignment);
   }
 
-  async listAssignments(): Promise<AssignmentResponse[]> {
-    const assignments = await AssignmentModel.find().sort({ createdAt: -1 });
+  async listAssignments(userId: string): Promise<AssignmentResponse[]> {
+    const assignments = await AssignmentModel.find({ userId, isDeleted: false }).sort({ createdAt: -1 });
 
     return assignments.map((assignment) => toAssignmentResponse(assignment));
   }
 
-  async getAssignmentById(id: string): Promise<AssignmentResponse> {
-    const assignment = await AssignmentModel.findById(id);
+  async getAssignmentById(id: string, userId: string): Promise<AssignmentResponse> {
+    const assignment = await AssignmentModel.findOne({ _id: id, userId });
 
     if (!assignment) {
       throw new HttpError(404, "Assignment not found");
@@ -168,10 +171,11 @@ export class AssignmentService {
 
   async updateAssignment(
     id: string,
+    userId: string,
     payload: UpdateAssignmentInput,
     file?: Express.Multer.File
   ): Promise<AssignmentResponse> {
-    const assignment = await AssignmentModel.findById(id);
+    const assignment = await AssignmentModel.findOne({ _id: id, userId });
 
     if (!assignment) {
       throw new HttpError(404, "Assignment not found");
@@ -212,5 +216,16 @@ export class AssignmentService {
     }
 
     return toAssignmentResponse(assignment);
+  }
+
+  async deleteAssignment(id: string, userId: string): Promise<void> {
+    const assignment = await AssignmentModel.findOne({ _id: id, userId });
+
+    if (!assignment) {
+      throw new HttpError(404, "Assignment not found");
+    }
+
+    assignment.isDeleted = true;
+    await assignment.save();
   }
 }

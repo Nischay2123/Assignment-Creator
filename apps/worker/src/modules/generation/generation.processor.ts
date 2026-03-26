@@ -30,6 +30,7 @@ const toGenerationResponse = (
   return {
     id: generation._id.toString(),
     assignmentId: generation.assignmentId.toString(),
+    userId: generation.userId.toString(),
     version: generation.version,
     status: generation.status,
     result: generation.result,

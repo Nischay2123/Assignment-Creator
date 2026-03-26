@@ -146,6 +146,12 @@ const AssignmentSchema = new Schema<Assignment>(
       type: AssignmentSourceMaterialSchema,
       required: false
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true
+    },
     isDeleted: {
       type: Boolean,
       default: false

@@ -60,6 +60,10 @@ export class AssignmentController {
     req: Request,
     res: Response<ApiSuccessResponse<AssignmentResponse>>
   ) {
+    if (!req.user) {
+      throw new HttpError(401, "User not authenticated");
+    }
+
     const normalizedBody = normalizeAssignmentBody(req.body);
     const payload: CreateAssignmentInput = createAssignmentSchema.parse(normalizedBody);
 
@@ -71,16 +75,20 @@ export class AssignmentController {
       }
     }
 
-    const result = await assignmentService.createAssignment(payload, req.file);
+    const result = await assignmentService.createAssignment(payload, req.user.id, req.file);
 
     return res.status(201).json({ data: result });
   }
 
   async list(
-    _req: Request,
+    req: Request,
     res: Response<ApiSuccessResponse<AssignmentResponse[]>>
   ) {
-    const result = await assignmentService.listAssignments();
+    if (!req.user) {
+      throw new HttpError(401, "User not authenticated");
+    }
+
+    const result = await assignmentService.listAssignments(req.user.id);
 
     return res.status(200).json({ data: result });
   }
@@ -89,8 +97,12 @@ export class AssignmentController {
     req: Request,
     res: Response<ApiSuccessResponse<AssignmentResponse>>
   ) {
+    if (!req.user) {
+      throw new HttpError(401, "User not authenticated");
+    }
+
     const { id } = assignmentParamsSchema.parse(req.params);
-    const result = await assignmentService.getAssignmentById(id);
+    const result = await assignmentService.getAssignmentById(id, req.user.id);
 
     return res.status(200).json({ data: result });
   }
@@ -99,6 +111,10 @@ export class AssignmentController {
     req: Request,
     res: Response<ApiSuccessResponse<AssignmentResponse>>
   ) {
+    if (!req.user) {
+      throw new HttpError(401, "User not authenticated");
+    }
+
     const { id } = assignmentParamsSchema.parse(req.params);
     const normalizedBody = normalizeAssignmentBody(req.body);
     const payload: UpdateAssignmentInput = updateAssignmentSchema.parse(normalizedBody);
@@ -111,8 +127,22 @@ export class AssignmentController {
       }
     }
 
-    const result = await assignmentService.updateAssignment(id, payload, req.file);
+    const result = await assignmentService.updateAssignment(id, req.user.id, payload, req.file);
 
     return res.status(200).json({ data: result });
+  }
+
+  async delete(
+    req: Request,
+    res: Response<ApiSuccessResponse<{ message: string }>>
+  ) {
+    if (!req.user) {
+      throw new HttpError(401, "User not authenticated");
+    }
+
+    const { id } = assignmentParamsSchema.parse(req.params);
+    await assignmentService.deleteAssignment(id, req.user.id);
+
+    return res.status(200).json({ data: { message: "Assignment deleted successfully" } });
   }
 }

@@ -113,6 +113,7 @@ export const toGenerationResponse = (
   return {
     id: generation._id.toString(),
     assignmentId: generation.assignmentId.toString(),
+    userId: generation.userId.toString(),
     version: generation.version,
     status: generation.status,
     result: generation.result,
@@ -129,8 +130,11 @@ export const toGenerationResponse = (
 };
 
 export class GenerationService {
-  async enqueueGeneration(payload: CreateGenerationInput): Promise<CreateGenerationResponse> {
-    const assignment = await AssignmentModel.findById(payload.assignmentId);
+  async enqueueGeneration(payload: CreateGenerationInput, userId: string): Promise<CreateGenerationResponse> {
+    const assignment = await AssignmentModel.findOne({
+      _id: payload.assignmentId,
+      userId
+    });
 
     if (!assignment) {
       throw new HttpError(404, "Assignment not found");
@@ -143,6 +147,7 @@ export class GenerationService {
 
     const generation = await GenerationModel.create({
       assignmentId: assignment._id,
+      userId,
       version,
       status: "queued",
       pdfStatus: "pending"
@@ -177,14 +182,14 @@ export class GenerationService {
     };
   }
 
-  async listGenerations(): Promise<GenerationResponse[]> {
-    const generations = await GenerationModel.find().sort({ createdAt: -1 });
+  async listGenerations(userId: string): Promise<GenerationResponse[]> {
+    const generations = await GenerationModel.find({ userId, isDeleted: false }).sort({ createdAt: -1 });
 
     return generations.map((generation) => toGenerationResponse(generation));
   }
 
-  async getGenerationById(id: string): Promise<GenerationResponse> {
-    const generation = await GenerationModel.findById(id);
+  async getGenerationById(id: string, userId: string): Promise<GenerationResponse> {
+    const generation = await GenerationModel.findOne({ _id: id, userId });
 
     if (!generation) {
       throw new HttpError(404, "Generation not found");
@@ -193,8 +198,8 @@ export class GenerationService {
     return toGenerationResponse(generation);
   }
 
-  async getPdfDownloadUrl(id: string): Promise<GenerationPdfDownloadUrlResponse> {
-    const generation = await GenerationModel.findById(id);
+  async getPdfDownloadUrl(id: string, userId: string): Promise<GenerationPdfDownloadUrlResponse> {
+    const generation = await GenerationModel.findOne({ _id: id, userId });
 
     if (!generation) {
       throw new HttpError(404, "Generation not found");
@@ -207,13 +212,13 @@ export class GenerationService {
     return createPresignedPdfUrl(generation.pdfUrl);
   }
 
-  async getPdfRedirectUrl(id: string): Promise<string> {
-    const result = await this.getPdfDownloadUrl(id);
+  async getPdfRedirectUrl(id: string, userId: string): Promise<string> {
+    const result = await this.getPdfDownloadUrl(id, userId);
     return result.url;
   }
 
-  async enqueuePdfRegeneration(id: string): Promise<GenerationResponse> {
-    const generation = await GenerationModel.findById(id);
+  async enqueuePdfRegeneration(id: string, userId: string): Promise<GenerationResponse> {
+    const generation = await GenerationModel.findOne({ _id: id, userId });
 
     if (!generation) {
       throw new HttpError(404, "Generation not found");

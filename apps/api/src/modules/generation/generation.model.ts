@@ -133,6 +133,12 @@ const GenerationSchema = new Schema<Generation>(
       type: Date,
       required: false
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true
+    },
     isDeleted: { 
       type: Boolean,
       default: false,
@@ -144,5 +150,6 @@ const GenerationSchema = new Schema<Generation>(
 );
 
 GenerationSchema.index({ assignmentId: 1, version: -1 }, { unique: true });
+GenerationSchema.index({ userId: 1, assignmentId: 1 });
 
 export const GenerationModel = model<Generation>("Generation", GenerationSchema);

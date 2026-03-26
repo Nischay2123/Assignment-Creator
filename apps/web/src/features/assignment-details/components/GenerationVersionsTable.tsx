@@ -11,7 +11,7 @@ export const GenerationVersionsTable = ({ rows, onPreviewClick }: GenerationVers
   return (
     <section className="overflow-hidden rounded-3xl border border-border bg-card">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[540px] text-left text-sm">
+        <table className="w-full min-w-135 text-left text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Version</th>

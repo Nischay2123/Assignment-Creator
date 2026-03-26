@@ -29,6 +29,7 @@ export interface GenerationResult {
 
 export interface Generation {
   assignmentId: Types.ObjectId;
+  userId: Types.ObjectId;
   version: number;
   status: GenerationStatus;
   result?: GenerationResult;
@@ -53,6 +54,7 @@ export interface CreateGenerationInput {
 export interface GenerationResponse {
   id: string;
   assignmentId: string;
+  userId: string;
   version: number;
   status: GenerationStatus;
   result?: GenerationResult;
