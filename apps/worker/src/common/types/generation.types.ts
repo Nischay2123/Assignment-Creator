@@ -68,6 +68,12 @@ export interface GenerationJobData {
   generationId: string;
 }
 
+export interface PdfGenerationJobData {
+  assignmentId: string;
+  generationId: string;
+  forceRegenerate?: boolean;
+}
+
 export interface GenerateRawResponseResult {
   rawResponse: string;
 }
@@ -81,5 +87,14 @@ export interface GenerationSocketEvent {
   assignmentId: string;
   status: GenerationStatus;
   generation?: GenerationResponse;
+  error?: string;
+}
+
+export type PdfGenerationStatus = "pending" | "generating" | "completed" | "failed";
+
+export interface PdfGenerationSocketEvent {
+  generationId: string;
+  status: PdfGenerationStatus;
+  pdfUrl?: string;
   error?: string;
 }

@@ -55,9 +55,29 @@ export type GenerationRecord = {
   prompt?: string
   rawResponse?: string
   error?: string
+  result?: GenerationResult
   createdAt: string
   updatedAt: string
   completedAt?: string
+}
+
+export type GeneratedQuestion = {
+  question: string
+  type: AssignmentQuestionType
+  difficulty: AssignmentDifficulty
+  marks: number
+  options?: string[]
+}
+
+export type GeneratedSection = {
+  sectionId: string
+  title: string
+  instruction: string
+  questions: GeneratedQuestion[]
+}
+
+export type GenerationResult = {
+  sections: GeneratedSection[]
 }
 
 export type CreateGenerationResult = {

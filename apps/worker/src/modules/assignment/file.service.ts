@@ -18,6 +18,10 @@ const getAssignmentSourceKey = (assignmentId: string): string => {
   return `${ASSIGNMENT_SOURCE_FILE_KEY_PREFIX}/${assignmentId}/source`;
 };
 
+const getAssignmentPdfKey = (assignmentId: string, generationId: string): string => {
+  return `${ASSIGNMENT_SOURCE_FILE_KEY_PREFIX}/${assignmentId}/pdf/${generationId}.pdf`;
+};
+
 const streamToBuffer = async (stream: NodeJS.ReadableStream): Promise<Buffer> => {
   const chunks: Buffer[] = [];
 
@@ -98,4 +102,39 @@ export const downloadAssignmentSourceFile = async (
     fileUrl,
     buffer
   };
+};
+
+export const uploadAssignmentPdfFile = async (
+  assignmentId: string,
+  generationId: string,
+  buffer: Buffer
+): Promise<{ fileUrl: string }> => {
+  const key = getAssignmentPdfKey(assignmentId, generationId);
+
+  assignmentFileLogger.info("Assignment PDF upload started", {
+    assignmentId,
+    generationId,
+    key,
+    sizeBytes: buffer.length
+  });
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: env.AWS_S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "application/pdf"
+    })
+  );
+
+  const fileUrl = `s3://${env.AWS_S3_BUCKET}/${key}`;
+
+  assignmentFileLogger.info("Assignment PDF upload completed", {
+    assignmentId,
+    generationId,
+    key,
+    fileUrl
+  });
+
+  return { fileUrl };
 };

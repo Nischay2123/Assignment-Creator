@@ -16,6 +16,15 @@ generationRoutes.post("/", asyncHandler((req, res) =>
 generationRoutes.get("/", asyncHandler((req, res) =>
   generationController.list(req, res)
 ));
+generationRoutes.post("/:id/pdf/regenerate", asyncHandler((req, res) =>
+  generationController.regeneratePdf(req, res)
+));
+generationRoutes.get("/:id/pdf-url", asyncHandler((req, res) =>
+  generationController.getPdfDownloadUrl(req, res)
+));
+generationRoutes.get("/:id/pdf", asyncHandler((req, res) =>
+  generationController.redirectToPdf(req, res)
+));
 generationRoutes.get("/:id", asyncHandler((req, res) =>
   generationController.getById(req, res)
 ));

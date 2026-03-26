@@ -13,6 +13,7 @@ import { AssignmentModel } from "../assignment/assignment.model.js";
 import { publishGenerationEvent } from "./generation.events.js";
 import { GenerationLlmService } from "./generation-llm.service.js";
 import { GenerationModel } from "./generation.model.js";
+import { addPdfGenerationJob } from "./pdf.queue.js";
 import {
   GenerationParseError,
   parseGenerationResponse
@@ -308,6 +309,22 @@ export class GenerationProcessor {
       generation.completedAt = new Date();
       generation.error = undefined;
       await generation.save();
+
+      try {
+        await addPdfGenerationJob({
+          assignmentId: assignment._id.toString(),
+          generationId: generation._id.toString()
+        });
+      } catch (queueError) {
+        generation.pdfStatus = "failed";
+        await generation.save();
+
+        generationLogger.error("Failed to enqueue PDF generation job", {
+          assignmentId: assignment._id.toString(),
+          generationId: generation._id.toString(),
+          error: queueError instanceof Error ? queueError.message : "Unknown error"
+        });
+      }
 
       const response = toGenerationResponse(generation);
 

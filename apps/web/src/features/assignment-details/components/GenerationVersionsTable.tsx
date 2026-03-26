@@ -1,10 +1,13 @@
+import { Button } from "@/components/ui/button"
 import type { GenerationVersionRow } from "@/features/assignment-details/types/assignment-details.types"
+import { AlertCircle, Loader2 } from "lucide-react"
 
 type GenerationVersionsTableProps = {
   rows: GenerationVersionRow[]
+  onPreviewClick?: (rowId: string) => void
 }
 
-export const GenerationVersionsTable = ({ rows }: GenerationVersionsTableProps) => {
+export const GenerationVersionsTable = ({ rows, onPreviewClick }: GenerationVersionsTableProps) => {
   return (
     <section className="overflow-hidden rounded-3xl border border-border bg-card">
       <div className="overflow-x-auto">
@@ -24,15 +27,25 @@ export const GenerationVersionsTable = ({ rows }: GenerationVersionsTableProps) 
                 <td className="px-4 py-3 capitalize text-muted-foreground">{row.statusLabel}</td>
                 <td className="px-4 py-3 text-muted-foreground">{row.createdOnLabel}</td>
                 <td className="px-4 py-3">
-                  {row.pdfLink ? (
-                    <a
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                      href={row.pdfLink}
-                      rel="noreferrer"
-                      target="_blank"
+                  {row.pdfLink && row.pdfLabel === "Preview" ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="font-medium text-primary hover:underline"
+                      onClick={() => onPreviewClick?.(row.id)}
                     >
                       {row.pdfLabel}
-                    </a>
+                    </Button>
+                  ) : row.pdfLabel === "Generating..." ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{row.pdfLabel}</span>
+                    </div>
+                  ) : row.pdfLabel === "Failed" ? (
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{row.pdfLabel}</span>
+                    </div>
                   ) : (
                     <span className="text-muted-foreground">{row.pdfLabel}</span>
                   )}

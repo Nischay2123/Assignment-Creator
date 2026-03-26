@@ -30,6 +30,10 @@ export type CreateGenerationPayload = {
   assignmentId: string
 }
 
+export type RegeneratePdfPayload = {
+  generationId: string
+}
+
 const buildFormData = (data: Record<string, any>, file?: File): FormData | Record<string, any> => {
   if (!file) {
     return data
@@ -101,6 +105,15 @@ export const assignmentApi = baseApi.injectEndpoints({
       invalidatesTags: ["Generations"],
       transformResponse: (response: ApiResponse<CreateGenerationResult>) => response.data,
     }),
+    regeneratePdf: builder.mutation<GenerationRecord, RegeneratePdfPayload>({
+      query: (payload) => ({
+        url: `generations/${payload.generationId}/pdf/regenerate`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Generations"],
+      transformResponse: (response: ApiResponse<GenerationRecord>) => response.data,
+    }),
   }),
 })
 
@@ -108,6 +121,7 @@ export const {
   useCreateAssignmentMutation,
   useUpdateAssignmentMutation,
   useCreateGenerationMutation,
+  useRegeneratePdfMutation,
   useGetAssignmentsQuery,
   useGetGenerationsQuery,
 } = assignmentApi

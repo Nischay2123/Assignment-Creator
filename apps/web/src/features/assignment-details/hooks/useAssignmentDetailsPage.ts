@@ -5,9 +5,12 @@ import {
   useCreateGenerationMutation,
   useGetAssignmentsQuery,
   useGetGenerationsQuery,
+  useRegeneratePdfMutation,
 } from "@/features/assignments/api/assignmentApi"
+import { API_ORIGIN } from "@/redux/apis/baseApi"
 import { useGenerationNotifications } from "@/features/assignments/hooks/useGenerationNotifications"
 import { usePendingGenerationSync } from "@/features/assignments/hooks/usePendingGenerationSync"
+import { usePdfGenerationStatus } from "@/features/assignment-details/hooks/usePdfGenerationStatus"
 import {
   countGenerationsForAssignment,
   trackPendingGeneration,
@@ -34,10 +37,15 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const navigate = useNavigate()
   const [feedbackMessage, setFeedbackMessage] = useState("")
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false)
+  const [isRegenerateConfirmOpen, setIsRegenerateConfirmOpen] = useState(false)
+  const [selectedGeneration, setSelectedGeneration] = useState<any>(null)
+  const [isPdfRegenerating, setIsPdfRegenerating] = useState(false)
 
   const assignmentsQuery = useGetAssignmentsQuery()
   const generationsQuery = useGetGenerationsQuery()
   const [createGeneration, createGenerationState] = useCreateGenerationMutation()
+  const [regeneratePdf, regeneratePdfState] = useRegeneratePdfMutation()
 
   const assignment = useMemo(() => {
     if (!assignmentId) {
@@ -54,14 +62,28 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
 
     return sortGenerationRows(generationsQuery.data ?? [])
       .filter((generation) => generation.assignmentId === assignment.id)
-      .map((generation) => ({
-        id: generation.id,
-        versionLabel: `v${generation.version}`,
-        statusLabel: generation.status,
-        createdOnLabel: formatDateTime(generation.createdAt),
-        pdfLink: generation.pdfUrl ?? null,
-        pdfLabel: generation.pdfUrl ? "Open PDF" : "Not generated",
-      }))
+      .map((generation) => {
+        let pdfLabel = "Not generated"
+        if (generation.pdfStatus === "pending") {
+          pdfLabel = "Generating..."
+        } else if (generation.pdfStatus === "generated") {
+          pdfLabel = "Preview"
+        } else if (generation.pdfStatus === "failed") {
+          pdfLabel = "Failed"
+        }
+        
+        return {
+          id: generation.id,
+          versionLabel: `v${generation.version}`,
+          statusLabel: generation.status,
+          createdOnLabel: formatDateTime(generation.createdAt),
+          pdfLink:
+            generation.pdfStatus === "generated"
+              ? `${API_ORIGIN}/api/generations/${generation.id}/pdf`
+              : null,
+          pdfLabel,
+        }
+      })
   }, [assignment, generationsQuery.data])
 
   const infoItems = useMemo(() => {
@@ -148,6 +170,63 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
     refetchGenerations: generationsQuery.refetch,
   })
 
+  usePdfGenerationStatus({
+    enabled: Boolean(assignmentId),
+    onStatusChange: (event) => {
+      // Handle PDF generation status updates
+      if (event.status === "failed") {
+        // Error will be shown in modal
+      } else if (event.status === "completed") {
+        // Auto-refresh generations to get updated PDF URL
+        generationsQuery.refetch()
+      }
+    },
+  })
+
+  // Handle PDF regeneration state updates
+  useEffect(() => {
+    if (regeneratePdfState.isLoading) {
+      setIsPdfRegenerating(true)
+    } else {
+      setIsPdfRegenerating(false)
+    }
+  }, [regeneratePdfState.isLoading])
+
+  const onPreviewClick = (generationId: string) => {
+    const generation = (generationsQuery.data ?? []).find((g) => g.id === generationId)
+    if (generation) {
+      setSelectedGeneration(generation)
+      setIsPdfModalOpen(true)
+    }
+  }
+
+  const onClosePdfModal = () => {
+    setIsPdfModalOpen(false)
+    setSelectedGeneration(null)
+  }
+
+  const onShowRegenerateConfirm = () => {
+    setIsRegenerateConfirmOpen(true)
+  }
+
+  const onCancelRegenerate = () => {
+    setIsRegenerateConfirmOpen(false)
+  }
+
+  const onConfirmRegenerate = async () => {
+    if (!selectedGeneration) {
+      return
+    }
+
+    try {
+      await regeneratePdf({ generationId: selectedGeneration.id }).unwrap()
+      setIsRegenerateConfirmOpen(false)
+    } catch (error: any) {
+      // Error will be displayed in the modal via socket events
+      console.error("PDF regeneration error:", error)
+    }
+  }
+
   useEffect(() => {
     setFeedbackMessage("")
   }, [assignmentId])
@@ -164,6 +243,10 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
     isNotFound: !isLoading && !assignment,
     isRefetching,
     hasError,
+    isPdfModalOpen,
+    isPdfRegenerating,
+    isRegenerateConfirmOpen,
+    selectedGeneration,
     infoItems,
     sections,
     generationRows,
@@ -171,5 +254,10 @@ export const useAssignmentDetailsPage = (): AssignmentDetailsViewModel => {
     onGenerate,
     onEdit,
     onRefetch,
+    onPreviewClick,
+    onClosePdfModal,
+    onShowRegenerateConfirm,
+    onCancelRegenerate,
+    onConfirmRegenerate,
   }
 }

@@ -36,6 +36,10 @@ export type AssignmentDetailsViewModel = {
   isNotFound: boolean
   isRefetching: boolean
   hasError: boolean
+  isPdfModalOpen: boolean
+  isPdfRegenerating: boolean
+  isRegenerateConfirmOpen: boolean
+  selectedGeneration: GenerationRecord | null
   infoItems: AssignmentInfoItem[]
   sections: SectionInfoItem[]
   generationRows: GenerationVersionRow[]
@@ -43,6 +47,11 @@ export type AssignmentDetailsViewModel = {
   onGenerate: () => Promise<void>
   onEdit: () => void
   onRefetch: () => Promise<void>
+  onPreviewClick: (generationId: string) => void
+  onClosePdfModal: () => void
+  onShowRegenerateConfirm: () => void
+  onCancelRegenerate: () => void
+  onConfirmRegenerate: () => Promise<void>
 }
 
 export const toSectionInfoItems = (sections: AssignmentSectionInput[]): SectionInfoItem[] => {

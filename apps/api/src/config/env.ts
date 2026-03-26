@@ -25,7 +25,9 @@ const envSchema = z.object({
   AWS_REGION: z.string().min(1).default("us-east-1"),
   AWS_S3_BUCKET: z.string().min(1),
   AWS_ACCESS_KEY_ID: z.string().min(1),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1)
+  AWS_SECRET_ACCESS_KEY: z.string().min(1),
+  PDF_PRESIGNED_URL_TTL_SECONDS: z.coerce.number().int().min(60).max(604800).default(3600),
+  API_PUBLIC_ORIGIN: z.string().url().optional()
 });
 
 export const env = envSchema.parse(process.env);

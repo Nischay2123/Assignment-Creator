@@ -6,7 +6,7 @@ import {
   type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react"
 
-import { clearBrowserSession } from "@/features/auth/lib/authStorage"
+import { clearBrowserSession } from "../../features/auth/lib/authStorage"
 
 export const API_ORIGIN = "http://localhost:3001"
 export const API_BASE_URL = `${API_ORIGIN}/api/`

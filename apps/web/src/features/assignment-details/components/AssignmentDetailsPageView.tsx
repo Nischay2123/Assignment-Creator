@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button"
 import { RefreshCwIcon } from "lucide-react"
 import { AssignmentOverviewCard } from "@/features/assignment-details/components/AssignmentOverviewCard"
 import { GenerationVersionsTable } from "@/features/assignment-details/components/GenerationVersionsTable"
+import { PdfPreviewModal } from "@/features/assignment-details/components/PdfPreviewModal"
+import { RegeneratePdfDialog } from "@/features/assignment-details/components/RegeneratePdfDialog"
 import { useAssignmentDetailsPage } from "@/features/assignment-details/hooks/useAssignmentDetailsPage"
 
 type AssignmentDetailsPageViewProps = {
@@ -83,7 +85,25 @@ export const AssignmentDetailsPageView = ({ model }: AssignmentDetailsPageViewPr
         </Button>
       </section>
 
-      <GenerationVersionsTable rows={model.generationRows} />
+      <GenerationVersionsTable 
+        rows={model.generationRows}
+        onPreviewClick={model.onPreviewClick}
+      />
+
+      <PdfPreviewModal
+        generation={model.selectedGeneration}
+        isOpen={model.isPdfModalOpen}
+        isRegenerating={model.isPdfRegenerating}
+        onClose={model.onClosePdfModal}
+        onRegenerate={model.onShowRegenerateConfirm}
+      />
+
+      <RegeneratePdfDialog
+        isOpen={model.isRegenerateConfirmOpen}
+        isLoading={model.isPdfRegenerating}
+        onConfirm={model.onConfirmRegenerate}
+        onCancel={model.onCancelRegenerate}
+      />
     </div>
   )
 }

@@ -75,14 +75,34 @@ export interface CreateGenerationResponse {
   assignmentId: string;
 }
 
+export interface GenerationPdfDownloadUrlResponse {
+  url: string;
+  expiresAt: string;
+}
+
 export interface GenerationJobData {
   assignmentId: string;
   generationId: string;
 }
 
+export interface PdfGenerationJobData {
+  assignmentId: string;
+  generationId: string;
+  forceRegenerate?: boolean;
+}
+
 export interface CreateGenerationJobResult {
   rawResponse: string;
   result: GenerationResult;
+}
+
+export type PdfGenerationStatus = "pending" | "generating" | "completed" | "failed";
+
+export interface PdfGenerationSocketEvent {
+  generationId: string;
+  status: PdfGenerationStatus;
+  pdfUrl?: string;
+  error?: string;
 }
 
 export interface GenerationSocketEvent {

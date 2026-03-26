@@ -2,7 +2,10 @@ import { logger } from "@repo/logger";
 import { Worker } from "bullmq";
 
 import type { FileProcessingJobData } from "./common/types/file-processing.types.js";
-import type { GenerationJobData } from "./common/types/generation.types.js";
+import type {
+  GenerationJobData,
+  PdfGenerationJobData
+} from "./common/types/generation.types.js";
 import { connectDatabase } from "./config/db.js";
 import { redisManager } from "./config/redis.js";
 import {
@@ -12,12 +15,16 @@ import {
 import { FileProcessor } from "./modules/assignment/file.processor.js";
 import {
   GENERATION_JOB_NAME,
-  GENERATION_QUEUE_NAME
+  GENERATION_QUEUE_NAME,
+  PDF_GENERATION_JOB_NAME,
+  PDF_GENERATION_QUEUE_NAME
 } from "./modules/generation/generation.constants.js";
 import { GenerationProcessor } from "./modules/generation/generation.processor.js";
+import { PdfProcessor } from "./modules/generation/pdf.processor.js";
 
 const workerLogger = logger.child({ module: "worker-bootstrap" });
 const generationProcessor = new GenerationProcessor();
+const pdfProcessor = new PdfProcessor();
 const fileProcessor = new FileProcessor();
 
 const bootstrap = async () => {
@@ -53,6 +60,42 @@ const bootstrap = async () => {
 
   workerLogger.info("Generation worker started", {
     queueName: GENERATION_QUEUE_NAME
+  });
+
+  const pdfWorker = new Worker<
+    PdfGenerationJobData,
+    void,
+    typeof PDF_GENERATION_JOB_NAME
+  >(
+    PDF_GENERATION_QUEUE_NAME,
+    async (job) => {
+      await pdfProcessor.processJob(job.data);
+    },
+    {
+      connection: redisManager.getConnectionOptions("queue"),
+      concurrency: 1
+    }
+  );
+
+  pdfWorker.on("completed", (job) => {
+    workerLogger.info("PDF generation job completed", {
+      jobId: job.id,
+      assignmentId: job.data.assignmentId,
+      generationId: job.data.generationId
+    });
+  });
+
+  pdfWorker.on("failed", (job, error) => {
+    workerLogger.error("PDF generation job failed", {
+      jobId: job?.id,
+      assignmentId: job?.data.assignmentId,
+      generationId: job?.data.generationId,
+      error: error.message
+    });
+  });
+
+  workerLogger.info("PDF generation worker started", {
+    queueName: PDF_GENERATION_QUEUE_NAME
   });
 
   const fileProcessingWorker = new Worker<
