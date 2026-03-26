@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { authenticateJwt } from "../../common/middleware/authenticate-jwt.js";
+import { resourceIntensiveRateLimiter } from "../../common/middleware/rate-limit.js";
 import { asyncHandler } from "../../common/utils/async-handler.js";
 import { GenerationController } from "./generation.controller.js";
 
@@ -16,7 +17,7 @@ generationRoutes.post("/", asyncHandler((req, res) =>
 generationRoutes.get("/", asyncHandler((req, res) =>
   generationController.list(req, res)
 ));
-generationRoutes.post("/:id/pdf/regenerate", asyncHandler((req, res) =>
+generationRoutes.post("/:id/pdf/regenerate", resourceIntensiveRateLimiter, asyncHandler((req, res) =>
   generationController.regeneratePdf(req, res)
 ));
 generationRoutes.get("/:id/pdf-url", asyncHandler((req, res) =>

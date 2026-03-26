@@ -4,6 +4,7 @@ import express from "express";
 import { logger } from "@repo/logger";
 
 import { errorHandler } from "./common/middleware/error-handler.js";
+import { globalRateLimiter } from "./common/middleware/rate-limit.js";
 import { env } from "./config/env.js";
 import { assignmentRoutes } from "./modules/assignment/assignment.routes.js";
 import { generationRoutes } from "./modules/generation/generation.routes.js";
@@ -38,6 +39,11 @@ export const createApp = () => {
 
     next();
   });
+
+  // Apply rate limiting to all routes (except /health which is skipped in middleware)
+  if (env.RATE_LIMIT_ENABLED !== false) {
+    app.use(globalRateLimiter);
+  }
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });

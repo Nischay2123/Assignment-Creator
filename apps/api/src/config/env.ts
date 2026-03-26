@@ -12,6 +12,10 @@ const envSchema = z.object({
   ACCESS_TOKEN_SECRET: z.string().min(1).default("change-me"),
   ACCESS_TOKEN_EXPIRY: z.string().min(1).default("1d"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  RATE_LIMIT_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
   SMTP_HOST: z.string().min(1).default("localhost"),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_SECURE: z

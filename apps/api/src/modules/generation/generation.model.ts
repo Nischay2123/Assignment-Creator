@@ -151,5 +151,6 @@ const GenerationSchema = new Schema<Generation>(
 
 GenerationSchema.index({ assignmentId: 1, version: -1 }, { unique: true });
 GenerationSchema.index({ userId: 1, assignmentId: 1 });
+GenerationSchema.index({ userId: 1, isDeleted: 1, createdAt: -1 });
 
 export const GenerationModel = model<Generation>("Generation", GenerationSchema);

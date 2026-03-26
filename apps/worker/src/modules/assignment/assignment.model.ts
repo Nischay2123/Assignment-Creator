@@ -162,4 +162,6 @@ const AssignmentSchema = new Schema<Assignment>(
   }
 );
 
+AssignmentSchema.index({ userId: 1, isDeleted: 1, createdAt: -1 });
+
 export const AssignmentModel = model<Assignment>("Assignment", AssignmentSchema);
