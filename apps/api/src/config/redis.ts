@@ -39,7 +39,7 @@ export const redisManager = createRedisManager({
     },
     rateLimit: {
       clientOptions: {
-        enableOfflineQueue: false,
+        enableOfflineQueue: true,
         maxRetriesPerRequest: 1,
         retryStrategy(times) {
           return Math.min(times * 25, 500);

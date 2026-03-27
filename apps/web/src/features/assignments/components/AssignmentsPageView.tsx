@@ -28,15 +28,9 @@ export const AssignmentsPageView = ({ model }: AssignmentsPageViewProps) => {
 
       <div className="mt-5 space-y-5">
         <AssignmentsToolbar
-          filterOptions={model.filterOptions}
-          isFilterMenuOpen={model.isFilterMenuOpen}
           onCreateAssignment={model.handleCreateAssignment}
-          onFilterMenuToggle={model.handleFilterMenuToggle}
-          onFilterSelect={model.handleFilterSelect}
           onSearchChange={model.handleSearchChange}
           searchValue={model.searchValue}
-          selectedFilter={model.selectedFilter}
-          selectedFilterLabel={model.selectedFilterLabel}
         />
         {model.feedbackMessage ? (
           <div className="rounded-[24px] border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm">

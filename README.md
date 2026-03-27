@@ -670,10 +670,9 @@ Response: { generationId: "gen456", status: "queued" }
 **Step 6: Real-time updates (WebSocket)**
 ```
 Teacher sees:
-  ⏳ Processing... (1 sec)
-  ⏳ Processing... (15 sec)
-  ⏳ Rendering PDF... (30 sec)
-  ✅ Complete! (120 sec)
+  ⏳ Processing...
+  ⏳ Rendering PDF... 
+  ✅ Complete! 
 ```
 
 **Step 7: Download**

@@ -14,25 +14,7 @@ import {
 } from "@/features/assignments/lib/pending-generations"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { toAssignmentListItem } from "@/features/assignments/lib/assignment-utils"
-import type {
-  AssignmentListItem,
-  AssignmentFilter,
-} from "@/features/assignments/types/assignment.types"
-
-const filterOptions: Array<{ label: string; value: AssignmentFilter }> = [
-  { label: "All Assignments", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "In Review", value: "review" },
-  { label: "Scheduled", value: "scheduled" },
-]
-
-const matchesFilter = (assignment: AssignmentListItem, filter: AssignmentFilter) => {
-  if (filter === "all") {
-    return true
-  }
-
-  return assignment.status === filter
-}
+import type { AssignmentListItem } from "@/features/assignments/types/assignment.types"
 
 const matchesSearch = (assignment: AssignmentListItem, searchTerm: string) =>
   assignment.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
@@ -41,8 +23,6 @@ export const useAssignmentsPage = () => {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [searchValue, setSearchValue] = useState("")
-  const [selectedFilter, setSelectedFilter] = useState<AssignmentFilter>("all")
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [feedbackMessage, setFeedbackMessage] = useState("")
 
@@ -60,12 +40,8 @@ export const useAssignmentsPage = () => {
   }, [assignmentsQuery.data, generationsQuery.data])
 
   const filteredAssignments = useMemo(() => {
-    return assignments.filter(
-      (assignment) =>
-        matchesFilter(assignment, selectedFilter) &&
-        matchesSearch(assignment, searchValue)
-    )
-  }, [assignments, searchValue, selectedFilter])
+    return assignments.filter((assignment) => matchesSearch(assignment, searchValue))
+  }, [assignments, searchValue])
 
   const hasAssignments = assignments.length > 0
   const hasVisibleAssignments = filteredAssignments.length > 0
@@ -83,19 +59,12 @@ export const useAssignmentsPage = () => {
 
     return {
       title: "No matching assignments",
-      description:
-        "Try clearing your search or switching filters to see more assignments from your classes.",
+      description: "Try clearing your search to see more assignments from your classes.",
       actionLabel: "Clear Search",
       actionVariant: "clear" as const,
     }
   }, [hasAssignments])
 
-  const selectedFilterLabel = useMemo(
-    () =>
-      filterOptions.find((option) => option.value === selectedFilter)?.label ??
-      "All Assignments",
-    [selectedFilter]
-  )
   const isLoading = assignmentsQuery.isLoading || generationsQuery.isLoading
   const hasError = Boolean(assignmentsQuery.error || generationsQuery.error)
 
@@ -103,26 +72,14 @@ export const useAssignmentsPage = () => {
     setSearchValue(value)
   }
 
-  const handleFilterSelect = (value: AssignmentFilter) => {
-    setSelectedFilter(value)
-    setIsFilterMenuOpen(false)
-  }
-
-  const handleFilterMenuToggle = () => {
-    setIsFilterMenuOpen((currentValue) => !currentValue)
-    setOpenMenuId(null)
-  }
-
   const handleAssignmentMenuToggle = (assignmentId: string) => {
     setOpenMenuId((currentValue) =>
       currentValue === assignmentId ? null : assignmentId
     )
-    setIsFilterMenuOpen(false)
   }
 
   const handleMenuClose = () => {
     setOpenMenuId(null)
-    setIsFilterMenuOpen(false)
   }
 
   const handleCreateAssignment = () => {
@@ -135,7 +92,6 @@ export const useAssignmentsPage = () => {
 
   const handleClearSearch = () => {
     setSearchValue("")
-    setSelectedFilter("all")
   }
 
   const handleEmptyAction = () => {
@@ -210,20 +166,14 @@ export const useAssignmentsPage = () => {
     hasError,
     hasAssignments,
     hasVisibleAssignments,
-    isFilterMenuOpen,
     isGenerating: createGenerationState.isLoading,
     isLoading,
     isMobile,
     openMenuId,
     searchValue,
-    selectedFilter,
-    selectedFilterLabel,
-    filterOptions,
     handleAssignmentMenuToggle,
     handleCreateAssignment,
     handleEmptyAction,
-    handleFilterMenuToggle,
-    handleFilterSelect,
     handleMenuClose,
     handleOpenAssignmentDetails,
     handleRegenerateAssignment,
