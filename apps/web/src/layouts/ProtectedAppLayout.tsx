@@ -1,9 +1,11 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { ClipboardListIcon, WandSparklesIcon } from "lucide-react"
 
 import { AppSidebar } from "@/components/side-bar/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { useLogoutMutation } from "@/features/auth/api/authApi"
 import { useAuthSession } from "@/features/auth/hooks/useAuthSession"
 import { baseApi } from "@/redux/apis/baseApi"
@@ -15,8 +17,9 @@ export const ProtectedAppLayout = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [logoutUser] = useLogoutMutation()
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
 
-  const handleLogout = useCallback(async () => {
+  const handleConfirmLogout = useCallback(async () => {
     try {
       await logoutUser().unwrap()
     } catch {
@@ -27,6 +30,10 @@ export const ProtectedAppLayout = () => {
       navigate("/login")
     }
   }, [dispatch, logout, logoutUser, navigate])
+
+  const handleLogout = useCallback(() => {
+    setIsLogoutDialogOpen(true)
+  }, [])
 
   const sidebarData = useMemo(
     () => ({
@@ -59,22 +66,52 @@ export const ProtectedAppLayout = () => {
       : "Assignments"
 
   return (
-    <SidebarProvider>
-      <AppSidebar data={sidebarData} handleLogout={handleLogout} />
-      <SidebarInset>
-        <header className="sticky top-0 z-10 border-b border-border/60 bg-background/95 px-3 py-2 backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger />
-            <p className="truncate text-sm font-semibold">{pageTitle}</p>
-          </div>
-        </header>
+    <>
+      <SidebarProvider>
+        <AppSidebar data={sidebarData} handleLogout={handleLogout} />
+        <SidebarInset>
+          <header className="sticky top-0 z-10 border-b border-border/60 bg-background/95 px-3 py-2 backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+              <p className="truncate text-sm font-semibold">{pageTitle}</p>
+            </div>
+          </header>
 
-        <div className="min-h-svh p-3 sm:p-4 md:p-6">
-          <div className="mx-auto w-full max-w-6xl">
-            <Outlet />
+          <div className="min-h-svh p-3 sm:p-4 md:p-6">
+            <div className="mx-auto w-full max-w-6xl">
+              <Outlet />
+            </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+
+      <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to log out? You'll need to sign in again to access your assignments.
+          </p>
+          <DialogFooter>
+            <button
+              onClick={() => setIsLogoutDialogOpen(false)}
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                setIsLogoutDialogOpen(false)
+                await handleConfirmLogout()
+              }}
+            >
+              Log out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
